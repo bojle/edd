@@ -128,16 +128,15 @@ end:
 	 */
 }
 
-
-
-int main() {
-	ll_init();
-	char *s = calloc(10, sizeof(char));	
-	for (int i=0; i<10; ++i)
-		s[i] = 'A';
-	ll_add_next(gbl_head_node, s);
-	ll_add_prev(ll_at(0), "string number 2 add previous");
-	printf("%s", ll_at(0)->s);
-	printf("%s", ll_at(1)->s);
-	//ll_free();
+node_t *global_head() {
+	return gbl_head_node;
 }
+
+node_t *global_current() {
+	return gbl_current_node;
+}
+node_t *global_tail() {
+	return gbl_tail_node;
+}
+
+#endif
