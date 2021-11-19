@@ -1,4 +1,5 @@
 #include "ll.h"
+#include <string.h>
 
 static node_t *gbl_current_node;
 static node_t *gbl_head_node;
@@ -32,8 +33,9 @@ end:
 
 node_t *ll_add_next(node_t *node,  char *s) {
 	node_t *newnode = ll_make_node(node, s, node->next);
-	node->next->prev = newnode;
+	node_t *next_node = node->next;
 	node->next = newnode;
+	next_node->prev = newnode;
 	gbl_current_node = newnode;
 	gbl_len++;
 	return newnode;
@@ -54,7 +56,7 @@ node_t *ll_make_node(node_t *prev, char *s, node_t *next) {
 	nd->prev = prev;
 	nd->next = next;
 	if (size != 0) {
-	   	nd->s = s;
+		strcpy(nd->s, s);
 	}
 	gbl_current_node = nd;
 	return nd;
@@ -139,4 +141,3 @@ node_t *global_tail() {
 	return gbl_tail_node;
 }
 
-#endif

@@ -54,6 +54,7 @@ node_t *ll_at(int n);
 node_t *ll_attach_nodes(node_t *n1, node_t *n2);
 
 node_t *ll_init();
+void ll_free();
 
 node_t *global_head();
 node_t *global_current();

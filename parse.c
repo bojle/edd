@@ -3,12 +3,13 @@
 #include <ctype.h>
 #include <stddef.h>
 
+
 // [address][command][arguments]
 
+/* parse an expression and return a parse_t object */
 parse_t *parse(parse_t *pt, char *exp) {
 	exp = parse_address(pt, exp);
-	pt->command = *exp;
-	exp++;
+	pt->command = *exp++;
 	pt->argument = skipspaces(exp);
 	return pt;
 }
@@ -30,6 +31,11 @@ int isaddresschar(char *a) {
 }
 
 
+/* 
+ * populate the 'from' and 'to' pointers of a parse_t 
+ * object, return a pointer to the expression where the 
+ * address ends
+ */
 char *parse_address(parse_t *pt, char *addr) {
 	bool commapassed = false;
 	for (; isaddresschar(addr); addr++) {
@@ -124,7 +130,16 @@ char *parse_address(parse_t *pt, char *addr) {
 	}
 	return addr;
 }
-	
-int main() {
 
+typedef void (*fptr_t) (char *);
+/* holds function pointers to functions of type void name(char *) */
+static fptr_t gbl_fptrs[TOTAL_COMMANDS];
+
+/* returns an index in gbl_fptrs. range: 0 - 25 */
+int fp_hash(char c) {
+	return c % 'a';
+}
+
+void eval(parse_t *pt) {
+	gbl_fptrs[fp_hash(pt->command)](pt->argument);
 }
