@@ -40,10 +40,10 @@ void io_load_file(char *filename) {
 void io_write_file(char *filename) {
 	FILE *fp = fileopen(filename, "a");
 
-	node_t *node = global_head()->next;
+	node_t *node = ll_next(global_head(), 1);
 	for (;;) {
-		io_write_line(fp, node->s);
-		if (node->next == global_tail()) {
+		io_write_line(fp, ll_s(node));
+		if (ll_next(node, 1) == global_tail()) {
 			break;
 		}
 	}
@@ -57,11 +57,10 @@ FILE *fileopen(char *filename, char *mode) {
 }
 
 void print_list(node_t *node) {
-	int read;
 	FILE *fp = fileopen("newfile.txt", "w");
 	for (;;) {
-		io_write_line(fp, node->s);
-		if (node->next == global_tail())
+		io_write_line(stdout, ll_s(node));
+		if (ll_next(node, 1) == global_tail())
 			return;
 		node = ll_next(node, 1);
 	}

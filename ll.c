@@ -1,6 +1,12 @@
 #include "ll.h"
 #include <string.h>
 
+typedef struct node_t{
+	struct node_t *prev;
+	char *s;
+	struct node_t *next;
+} node_t;
+
 static node_t *gbl_current_node;
 static node_t *gbl_head_node;
 static node_t *gbl_tail_node;
@@ -78,7 +84,7 @@ node_t *ll_remove_node(node_t *node) {
 }	
 	
 node_t *ll_next(node_t *node, int offset) {
-	while (node->next != gbl_tail_node && node->next != NULL && offset > 0) {
+	while (/*node->next != gbl_tail_node &&*/ node->next != NULL && offset > 0) {
 		node = node->next;
 		offset--;
 	}
@@ -87,12 +93,16 @@ node_t *ll_next(node_t *node, int offset) {
 }
 
 node_t *ll_prev(node_t *node, int offset) {
-	while (node->prev != gbl_head_node && node->prev != NULL && offset > 0) {
+	while (/*node->prev != gbl_head_node &&*/ node->prev != NULL && offset > 0) {
 		node = node->prev;
 		offset--;
 	}
 	gbl_current_node = node;
 	return node;
+}
+
+char *ll_s(node_t *node) {
+	return node->s;
 }
 
 node_t *ll_at(int n) {

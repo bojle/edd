@@ -28,15 +28,11 @@
  * 		ll_alloc_node(size)
  */ 
 
-typedef struct LL{
-	struct LL *prev;
-	char *s;
-	struct LL *next;
-} node_t;
 
+typedef struct node_t node_t;
 
-static void ll_free_node(node_t* node);
-static node_t *ll_alloc_node(size_t size); // `size` -> size of string
+// static void ll_free_node(node_t* node);
+// static node_t *ll_alloc_node(size_t size); // `size` -> size of string
 
 node_t *ll_add_next(node_t *node,  char *s);
 node_t *ll_add_prev(node_t *node,  char *s);
@@ -50,6 +46,8 @@ node_t *ll_prev(node_t *node, int offset);
 
 /* Linked lists are 0 indexed */
 node_t *ll_at(int n);
+
+char *ll_s(node_t *node);
 
 node_t *ll_attach_nodes(node_t *n1, node_t *n2);
 
