@@ -12,13 +12,7 @@
 
 #include "ll.h"
 
-typedef struct parse_t {
-	node_t *from;
-	node_t *to;
-	char command;
-	char *argument;
-	char *regex;
-}parse_t;
+typedef struct parse_t parse_t;
 
 /* parse */
 parse_t *parse(parse_t *pt, char *exp);

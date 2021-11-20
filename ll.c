@@ -1,11 +1,11 @@
 #include "ll.h"
 #include <string.h>
 
-typedef struct node_t{
+struct node_t{
 	struct node_t *prev;
 	char *s;
 	struct node_t *next;
-} node_t;
+};
 
 static node_t *gbl_current_node;
 static node_t *gbl_head_node;

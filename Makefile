@@ -1,15 +1,18 @@
-CC=gcc
-FLAGS=-Wall -pedantic -Wextra -g
-LDLIBS=
-EXE=d
+cc=gcc
+flags=-Wall -pedantic -Wextra -g
+ldlibs=
+exe=d
+objects= ll.o parse.o io.o 
 
-${EXE}: ll.o parse.o io.o
-	${CC} ${FLAGS} -o ${EXE} ll.o parse.o io.o ${LDLIBS}
+${exe}: ${objects}
+	${cc} ${flags} -o $@ $^ ${ldlibs}
+
 ll.o: ll.c ll.h
-	${CC} ${FLAGS} -c ll.c 
+	${cc} ${flags} -c ll.c 
+
 parse.o: parse.c parse.h ll.h
-	${CC} ${FLAGS} -c parse.c 
+	${cc} ${flags} -c parse.c 
 
 io.o: io.c io.h ll.h
-	${CC} ${FLAGS} -c io.c 
+	${cc} ${flags} -c io.c 
 

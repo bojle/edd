@@ -6,6 +6,14 @@
 
 // [address][command][arguments]
 
+struct parse_t {
+	node_t *from;
+	node_t *to;
+	char command;
+	char *argument;
+	char *regex;
+};
+
 /* parse an expression and return a parse_t object */
 parse_t *parse(parse_t *pt, char *exp) {
 	exp = parse_address(pt, exp);
