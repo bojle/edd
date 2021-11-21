@@ -1,9 +1,22 @@
 #include <stdlib.h>
-#include "main.h"
-//#include "ll.h"
-//#include "io.h"
-//#include "parse.h"
+#include <setjmp.h>
+#include <stdio.h>
+#include "ll.h"
+#include "parse.h"
+#include "io.h"
 
+char gbl_prompt[64] = ":";
+jmp_buf to_repl;
+
+void repl() {
+	char *line = NULL;
+	size_t linecap;
+	setjmp(to_repl);
+	while (io_read_line(&line, &linecap, stdin, gbl_prompt) > 0) {
+		eval(parse(line));
+	}
+	free(line);
+}
 
 
 #if 0
@@ -18,15 +31,14 @@ void print_list(node_t *node) {
 #endif
 
 int main(int argc, char *argv[]) {
-#if 0
 	if (argc < 2) {
 		fprintf(stderr, "Too few arguments\n");
 		exit(EXIT_FAILURE);
 	}
 	ll_init();
 	atexit(ll_free);
-
+	argv[1] = "man.txt";
 	io_load_file(argv[1]);
+	repl();
 	ll_free();
-#endif
 }

@@ -1,8 +1,11 @@
 #include "parse.h"
+#include <stdio.h>
 #include "ed.h"
+#include "ll.h"
 #include <stdbool.h>
 #include <ctype.h>
 #include <stddef.h>
+#include <stdlib.h>
 
 
 /* 
@@ -25,12 +28,19 @@ struct parse_t {
 	char *regex;
 };
 
+static parse_t pt;
+
 parse_t *parse(char *exp) {
-	parse_t *pt = calloc(1, sizeof(*pt));
-	exp = parse_address(pt, exp);
-	pt->command = *exp++;
-	pt->argument = skipspaces(exp);
-	return pt;
+	/* defaults */
+	pt.from = ll_next(global_head(), 1);
+	pt.to = ll_prev(global_tail(), 1);
+	pt.command = '\0';
+	pt.argument = NULL;
+
+	exp = parse_address(&pt, exp);
+	pt.command = *exp++;
+	pt.argument = skipspaces(exp);
+	return &pt;
 }
 
 char *skipspaces(char *s) {
@@ -151,6 +161,11 @@ char *parse_address(parse_t *pt, char *addr) {
 }
 
 void eval(parse_t *pt) {
+	printf("node from: %s", ll_s(pt->from));
+	printf("node to: %s", ll_s(pt->to));
+	printf("command : %c\n", pt->command);
+	printf("arguments : %s", pt->argument);
+
 	switch(pt->command) {
 #if 0
 		case 'a':
@@ -231,5 +246,4 @@ void eval(parse_t *pt) {
 			printf("Unimplemented Command\n");
 #endif
 	}
-	free(pt);
 }

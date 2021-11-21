@@ -2,6 +2,10 @@
 #include <string.h>
 #include "err.h"
 #include <errno.h>
+#include <stdlib.h>
+
+/* should the list be 0 or 1 indexed? */
+#define ED_INDEXING 1
 
 struct node_t{
 	struct node_t *prev;
@@ -22,7 +26,7 @@ static void ll_free_node(node_t* node) {
 static node_t *ll_alloc_node(size_t size) {
 	node_t *node = calloc(1, sizeof(*node));
 	if (!node) {
-		err(to_repl, strerror(errno));
+		err(&to_repl, strerror(errno));
 	}
 
 	if (size == 0) {
@@ -30,7 +34,7 @@ static node_t *ll_alloc_node(size_t size) {
 	}
 	node->s = calloc(size + 1, sizeof(*(node->s))); // +1 for null byte
 	if (!node->s) {
-		err(to_repl, strerror(errno));
+		err(&to_repl, strerror(errno));
 	}
 
 end:
@@ -62,7 +66,7 @@ node_t *ll_make_node(node_t *prev, char *s, node_t *next) {
 	nd->prev = prev;
 	nd->next = next;
 	if (size != 0) {
-		strncpy(node->s, s, size + 1);
+		strncpy(nd->s, s, size + 1);
 	}
 	gbl_current_node = nd;
 	return nd;
@@ -105,8 +109,9 @@ char *ll_s(node_t *node) {
 	return node->s;
 }
 
+/* This is the only function that is aware of "indexes" */
 node_t *ll_at(int n) {
-	return ll_next(gbl_head_node->next, n);
+	return ll_next(gbl_head_node->next, n - ED_INDEXING);
 }
 
 node_t *ll_attach_nodes(node_t *n1, node_t *n2) {

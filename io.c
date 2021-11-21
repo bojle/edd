@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "io.h"
 #include "ll.h"
@@ -7,7 +8,7 @@
 #include <errno.h>
 #include <string.h>
 
-#define FLUSH_OUTPUT 1
+#define ED_FLUSH_OUTPUT 1
 
 ssize_t io_read_line(char **line, size_t *linecap, FILE *fp, char *prompt) {
 	if (prompt != NULL) {
@@ -23,7 +24,7 @@ ssize_t io_read_line(char **line, size_t *linecap, FILE *fp, char *prompt) {
 
 int io_write_line(FILE *fp, char *line) {
 	int bytes_read = fprintf(fp, "%s", line);
-#ifdef FLUSH_OUTPUT
+#if (ED_FLUSH_OUTPUT == 1)
 	fflush(fp);
 #endif
 	return bytes_read;
@@ -59,7 +60,7 @@ void io_write_file(char *filename) {
 FILE *fileopen(char *filename, char *mode) {
 	FILE *fp = fopen(filename, mode);
 	if (fp == NULL) {
-		err(&to_repl, "%s: %s", "fileopen", strerror(errno));
+		err(&to_repl, strerror(errno));
 	}
 	return fp;
 }
