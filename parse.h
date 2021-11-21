@@ -10,12 +10,16 @@
  */
 
 
-#include "ll.h"
-
 typedef struct parse_t parse_t;
 
 /* parse */
-parse_t *parse(parse_t *pt, char *exp);
+
+/* parse an expression and return a parse_t object pointer */
+parse_t *parse(char *exp);
+/* 
+ * Parse the address part of a expression, return the first character at
+ * the end of an address
+ */
 char *parse_address(parse_t *pt, char *addr);
 int isaddresschar(char *a);
 char *skipspaces(char *s);
@@ -23,7 +27,6 @@ char *skipspaces(char *s);
 
 /* eval */
 void eval(parse_t *pt);
-#define TOTAL_COMMANDS ('z' - 'a' + 1)
 int fp_hash(char c);
 
 #endif

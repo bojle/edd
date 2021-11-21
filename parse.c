@@ -1,10 +1,21 @@
 #include "parse.h"
+#include "ed.h"
 #include <stdbool.h>
 #include <ctype.h>
 #include <stddef.h>
 
 
-// [address][command][arguments]
+/* 
+ * An expression: [address][sep][command][sep][arguments]
+ * [address]: 1,3 8,$ .,$ ,
+ * [sep]: ' ' or ''
+ * [command]: s,c,a,W,e etc.
+ * [arguments]: any text after command
+ *
+ * Eg expression: 9,15s/dog/cat/g
+ * Here, 9,15 is forms address, 's' is the command, everything else from '/' 
+ * are arguments to 's' command.
+ */
 
 struct parse_t {
 	node_t *from;
@@ -14,8 +25,8 @@ struct parse_t {
 	char *regex;
 };
 
-/* parse an expression and return a parse_t object */
-parse_t *parse(parse_t *pt, char *exp) {
+parse_t *parse(char *exp) {
+	parse_t *pt = calloc(1, sizeof(*pt));
 	exp = parse_address(pt, exp);
 	pt->command = *exp++;
 	pt->argument = skipspaces(exp);
@@ -139,15 +150,86 @@ char *parse_address(parse_t *pt, char *addr) {
 	return addr;
 }
 
-typedef void (*fptr_t) (char *);
-/* holds function pointers to functions of type void name(char *) */
-static fptr_t gbl_fptrs[TOTAL_COMMANDS];
-
-/* returns an index in gbl_fptrs. range: 0 - 25 */
-int fp_hash(char c) {
-	return c % 'a';
-}
-
 void eval(parse_t *pt) {
-	gbl_fptrs[fp_hash(pt->command)](pt->argument);
+	switch(pt->command) {
+#if 0
+		case 'a':
+			ed_append(pt->from);
+			break;
+		case 'd':
+			ed_delete(pt->from, pt->to);
+			break;
+		case 'c':
+			ed_change(pt->from, pt->to);
+			break;
+		case 'e':
+			if (pt->rest[0] == '!') 
+				/* ed_edit(filename, cmd, force) */
+				ed_edit(NULL, skipspaces(pt->rest+1), false);
+			else
+				ed_edit(pt->rest, NULL, false);
+			break;
+		case 'E':
+			ed_edit(pt->rest, NULL, true);
+			break;
+		case 'w':
+			if (pt->rest[0] == '!')
+				ed_save(NULL, nextword(pt->rest), 0, 0);
+			else if (pt->rest[0] == 'q')
+				ed_save(state.filename, NULL, 1, 0);
+			else if (isalnum(pt->rest[0]))
+				ed_save(pt->rest, NULL, 0, 0);
+			else
+				ed_save(state.filename, NULL, 0, 0);
+			break;
+		case 'W':
+			ed_save(pt->rest, NULL, 0, 1);
+			break;
+		case 'p':
+			ed_print(pt->from, pt->to);
+			break;
+		case 'n':
+			ed_printn(pt->from, pt->to);
+			break;
+		case '!':
+			ed_shell(pt->rest, true);
+			break;
+		case 'q':
+			ed_quit(false);
+			break;
+		case 'Q':
+			ed_quit(true);
+			break;
+		case 's':
+			ed_subs(pt->from, pt->to, pt->regex, pt->rest);
+			break;
+		case 'k':
+			ed_mark(pt->from, pt->rest[0]);
+			break;
+		case 'r':
+			if (pt->rest[0] == '!')
+				ed_read(NULL, nextword(pt->rest), pt->from);
+			else
+				ed_read(pt->rest, NULL, pt->from);
+			break;
+		case 'j':
+			ed_join(pt->from, pt->to);
+			break;
+		case '=':
+			ed_equals(pt->from);
+			break;
+		case '#':
+			ed_hash(pt->from);
+			break;
+		/* TODO: remove this temporary print func */
+		case 't': 
+			ll_print(gbl_head_node);
+			break;
+		case '\n':
+			break;
+		default:
+			printf("Unimplemented Command\n");
+#endif
+	}
+	free(pt);
 }

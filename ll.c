@@ -1,5 +1,7 @@
 #include "ll.h"
 #include <string.h>
+#include "err.h"
+#include <errno.h>
 
 struct node_t{
 	struct node_t *prev;
@@ -10,7 +12,7 @@ struct node_t{
 static node_t *gbl_current_node;
 static node_t *gbl_head_node;
 static node_t *gbl_tail_node;
-static size_t gbl_len;
+static ssize_t gbl_len;
 
 static void ll_free_node(node_t* node) {
 	free((char *)node->s);
@@ -18,19 +20,17 @@ static void ll_free_node(node_t* node) {
 }
 
 static node_t *ll_alloc_node(size_t size) {
-	// TODO: better error checking with suspension upon failure
-
 	node_t *node = calloc(1, sizeof(*node));
 	if (!node) {
-		return NULL;
+		err(to_repl, strerror(errno));
 	}
 
 	if (size == 0) {
 		goto end; // do not allocate space for the string
 	}
-	node->s = calloc(size, sizeof(*(node->s)));
+	node->s = calloc(size + 1, sizeof(*(node->s))); // +1 for null byte
 	if (!node->s) {
-		return NULL;
+		err(to_repl, strerror(errno));
 	}
 
 end:
@@ -62,7 +62,7 @@ node_t *ll_make_node(node_t *prev, char *s, node_t *next) {
 	nd->prev = prev;
 	nd->next = next;
 	if (size != 0) {
-		strcpy(nd->s, s);
+		strncpy(node->s, s, size + 1);
 	}
 	gbl_current_node = nd;
 	return nd;

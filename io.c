@@ -1,16 +1,20 @@
-#include "io.h"
-#include "ll.h"
 #include <stdio.h>
 
+#include "io.h"
+#include "ll.h"
+#include "err.h"
+
+#include <errno.h>
+#include <string.h>
+
+#define FLUSH_OUTPUT 1
+
 ssize_t io_read_line(char **line, size_t *linecap, FILE *fp, char *prompt) {
-	if (!prompt) {
+	if (prompt != NULL) {
 		printf("%s", prompt);
 	}
-
 	ssize_t bytes_read = 0;
-
 	if ((bytes_read = getline(line, linecap, fp)) < 0) {
-		// TODO: err check
 		return -1;
 	}
 	return bytes_read;
@@ -18,9 +22,10 @@ ssize_t io_read_line(char **line, size_t *linecap, FILE *fp, char *prompt) {
 
 
 int io_write_line(FILE *fp, char *line) {
-	// TODO: err check. if fp has write persmissions in append mode
 	int bytes_read = fprintf(fp, "%s", line);
+#ifdef FLUSH_OUTPUT
 	fflush(fp);
+#endif
 	return bytes_read;
 }
 
@@ -50,20 +55,11 @@ void io_write_file(char *filename) {
 	fclose(fp);
 }
 
+
 FILE *fileopen(char *filename, char *mode) {
 	FILE *fp = fopen(filename, mode);
-	// TODO: err chekc
+	if (fp == NULL) {
+		err(&to_repl, "%s: %s", "fileopen", strerror(errno));
+	}
 	return fp;
 }
-
-void print_list(node_t *node) {
-	FILE *fp = fileopen("newfile.txt", "w");
-	for (;;) {
-		io_write_line(stdout, ll_s(node));
-		if (ll_next(node, 1) == global_tail())
-			return;
-		node = ll_next(node, 1);
-	}
-}
-
-

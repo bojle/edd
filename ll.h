@@ -1,10 +1,6 @@
 #ifndef LL_H
 #define LL_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 /* 
  * public:
  * 		node_t *gbl_current_node;
@@ -29,14 +25,15 @@
  */ 
 
 
+/* The pointer type for a node in the 0-indexed global linked list */
 typedef struct node_t node_t;
 
-// static void ll_free_node(node_t* node);
-// static node_t *ll_alloc_node(size_t size); // `size` -> size of string
-
+/* Add a node with 's' as its value next to 'node' */
 node_t *ll_add_next(node_t *node,  char *s);
+/* Add a node with 's' as its value before 'node' */
 node_t *ll_add_prev(node_t *node,  char *s);
 
+/* Return a node with 's' as its values, 'prev' and 'next' as its pointers */
 node_t *ll_make_node(node_t *prev, char *s, node_t *next);
 node_t *ll_remove_node(node_t *node);
 
@@ -47,15 +44,19 @@ node_t *ll_prev(node_t *node, int offset);
 /* Linked lists are 0 indexed */
 node_t *ll_at(int n);
 
-char *ll_s(node_t *node);
 
 node_t *ll_attach_nodes(node_t *n1, node_t *n2);
 
+/* Initialise the global list */
 node_t *ll_init();
+/* Free the global list */
 void ll_free();
 
 node_t *global_head();
 node_t *global_current();
 node_t *global_tail();
+
+/* Access the value of a node */
+char *ll_s(node_t *node);
 
 #endif

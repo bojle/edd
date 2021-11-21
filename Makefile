@@ -2,13 +2,19 @@ cc=gcc
 flags=-Wall -pedantic -Wextra -g
 ldlibs=
 exe=d
-objects= ll.o parse.o io.o 
+objects= main.o ll.o parse.o io.o ed.o
 
 ${exe}: ${objects}
 	${cc} ${flags} -o $@ $^ ${ldlibs}
 
+main.o: main.c ll.h parse.h io.h
+	${cc} ${flags} -c main.c
+
 ll.o: ll.c ll.h
 	${cc} ${flags} -c ll.c 
+
+ed.o: ed.c ed.h ll.h
+	${cc} ${flags} -c ed.c 
 
 parse.o: parse.c parse.h ll.h
 	${cc} ${flags} -c parse.c 
