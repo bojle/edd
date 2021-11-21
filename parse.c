@@ -38,6 +38,7 @@ parse_t *parse(char *exp) {
 	pt.argument = NULL;
 
 	exp = parse_address(&pt, exp);
+	exp = skipspaces(exp);
 	pt.command = *exp++;
 	pt.argument = skipspaces(exp);
 	return &pt;
@@ -165,9 +166,9 @@ void eval(parse_t *pt) {
 	printf("node to: %s", ll_s(pt->to));
 	printf("command : %c\n", pt->command);
 	printf("arguments : %s", pt->argument);
+#if 0
 
 	switch(pt->command) {
-#if 0
 		case 'a':
 			ed_append(pt->from);
 			break;
@@ -244,6 +245,6 @@ void eval(parse_t *pt) {
 			break;
 		default:
 			printf("Unimplemented Command\n");
-#endif
 	}
+#endif
 }
