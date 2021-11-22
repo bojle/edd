@@ -1,6 +1,7 @@
 #ifndef LL_H
 #define LL_H
 
+#include <regex.h>
 /* 
  * public:
  * 		node_t *gbl_current_node;
@@ -41,6 +42,9 @@ node_t *ll_remove_node(node_t *node);
 node_t *ll_next(node_t *node, int offset);
 node_t *ll_prev(node_t *node, int offset);
 
+node_t *ll_reg_next(node_t *node, regex_t *reg);
+node_t *ll_reg_prev(node_t *node, regex_t *reg);
+
 /* Linked lists are 0 indexed */
 node_t *ll_at(int n);
 
@@ -58,5 +62,7 @@ node_t *global_tail();
 
 /* Access the value of a node */
 char *ll_s(node_t *node);
+
+ssize_t ll_node_size(node_t *node);
 
 #endif

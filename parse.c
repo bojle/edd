@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "ed.h"
 #include "ll.h"
+#include "err.h"
 #include <stdbool.h>
 #include <ctype.h>
 #include <stddef.h>
@@ -54,9 +55,16 @@ char *skipspaces(char *s) {
 int isaddresschar(char *a) {
 	if (*a == '-' || *a == '+' || *a == '$' ||
 		*a == '.' || *a == ',' || isdigit(*a) ||
-		(isalpha(*a) && *(a-1) == '\''))
+		(isalpha(*a) && *(a-1) == '\'') || *a == '/')
 		return 1;
 	return 0;
+}
+
+static char *regerror_aux(int errcode, regex_t *reg) {
+	static char reg_str[128];
+	regerror(errcode, reg, reg_str, 128);
+	regfree(reg);
+	return reg_str;
 }
 
 
@@ -67,6 +75,7 @@ int isaddresschar(char *a) {
  */
 char *parse_address(parse_t *pt, char *addr) {
 	bool commapassed = false;
+	regex_t reg;
 	for (; isaddresschar(addr); addr++) {
 		long num = 1;
 		char *start = NULL;
@@ -127,8 +136,6 @@ char *parse_address(parse_t *pt, char *addr) {
 				pt->from = global_current();
 				pt->to = global_tail();
 				break;
-#if 0
-				// TODO: add ll_reg_next 
 			case '/':
 				start = addr+1;
 				addr++;
@@ -136,9 +143,12 @@ char *parse_address(parse_t *pt, char *addr) {
 					addr++;
 				}
 				*addr = '\0';
-				pt->regex = start;
+				if ((num = regcomp(&reg, start, REG_EXTENDED)) != 0) {
+					err(&to_repl, regerror_aux(num, &reg));
+				}
+				pt->from = pt->to = ll_reg_next(global_head(), &reg);
+				regfree(&reg);
 				break;
-#endif
 			case '\'':
 				//if ((pt->from = markget(*(addr+1))) == NULL) {
 				//	io_err("Mark not set %c\n", *(addr+1));
@@ -192,7 +202,7 @@ void eval(parse_t *pt) {
 	printf("node from: %s", ll_s(pt->from));
 	printf("node to: %s", ll_s(pt->to));
 	printf("command : %c\n", pt->command);
-	printf("arguments : %s", pt->argument);
+	printf("arguments : %s\n", pt->argument);
 #if 0
 	fptr_table[fp_hash(pt->command)](pt->from, pt->to, pt->argument);
 

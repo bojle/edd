@@ -3,6 +3,7 @@
 #include "err.h"
 #include <errno.h>
 #include <stdlib.h>
+#include <regex.h>
 
 /* should the list be 0 or 1 indexed? */
 #define ED_INDEXING 1
@@ -10,6 +11,7 @@
 struct node_t{
 	struct node_t *prev;
 	char *s;
+	ssize_t size;
 	struct node_t *next;
 };
 
@@ -65,6 +67,7 @@ node_t *ll_make_node(node_t *prev, char *s, node_t *next) {
 	node_t *nd = ll_alloc_node(size);
 	nd->prev = prev;
 	nd->next = next;
+	nd->size = size;
 	if (size != 0) {
 		strncpy(nd->s, s, size + 1);
 	}
@@ -104,6 +107,27 @@ node_t *ll_prev(node_t *node, int offset) {
 	gbl_current_node = node;
 	return node;
 }
+
+node_t *ll_reg_next(node_t *node, regex_t *reg) {
+	for (node_t *nd = node->next; nd != global_tail(); nd = nd->next) {
+		if (regexec(reg, nd->s, 0, NULL, 0) == 0) {
+			return nd;
+		}
+	}
+	gbl_current_node = node;
+	return node;
+}
+
+node_t *ll_reg_prev(node_t *node, regex_t *reg) {
+	for (node_t *nd = node->prev; nd != global_head(); nd = nd->prev) {
+		if (regexec(reg, nd->s, 0, NULL, 0) == 0) {
+			return nd;
+		}
+	}
+	gbl_current_node = node;
+	return node;
+}
+
 
 char *ll_s(node_t *node) {
 	return node->s;
@@ -156,3 +180,6 @@ node_t *global_tail() {
 	return gbl_tail_node;
 }
 
+ssize_t ll_node_size(node_t *node) {
+	return node->size;
+}
