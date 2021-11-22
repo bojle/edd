@@ -16,7 +16,7 @@ ll.o: ll.c ll.h err.h
 err.o: err.c err.h
 	${cc} ${flags} -c err.c 
 
-ed.o: ed.c ed.h ll.h
+ed.o: ed.c ed.h ll.h io.h
 	${cc} ${flags} -c ed.c 
 
 parse.o: parse.c parse.h ll.h

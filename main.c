@@ -36,6 +36,7 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 	ll_init();
+	fptr_init();
 	atexit(ll_free);
 	argv[1] = "man.txt";
 	io_load_file(argv[1]);

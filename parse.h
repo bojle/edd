@@ -24,9 +24,8 @@ char *parse_address(parse_t *pt, char *addr);
 int isaddresschar(char *a);
 char *skipspaces(char *s);
 
-
 /* eval */
 void eval(parse_t *pt);
-int fp_hash(char c);
+void fptr_init();
 
 #endif

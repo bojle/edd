@@ -25,7 +25,6 @@ struct parse_t {
 	node_t *to;
 	char command;
 	char *argument;
-	char *regex;
 };
 
 static parse_t pt;
@@ -128,6 +127,8 @@ char *parse_address(parse_t *pt, char *addr) {
 				pt->from = global_current();
 				pt->to = global_tail();
 				break;
+#if 0
+				// TODO: add ll_reg_next 
 			case '/':
 				start = addr+1;
 				addr++;
@@ -137,6 +138,7 @@ char *parse_address(parse_t *pt, char *addr) {
 				*addr = '\0';
 				pt->regex = start;
 				break;
+#endif
 			case '\'':
 				//if ((pt->from = markget(*(addr+1))) == NULL) {
 				//	io_err("Mark not set %c\n", *(addr+1));
@@ -161,12 +163,38 @@ char *parse_address(parse_t *pt, char *addr) {
 	return addr;
 }
 
+/* 
+ * Function pointer type that takes two node_t * and a char *
+ * and returns nothing
+ */
+typedef void (*fptr_t) (node_t *, node_t *, char *);
+
+#define FIRST_ASCII_CHAR '!'
+#define LAST_ASCII_CHAR 'z'
+/* Size of fptr_table; accomodates all the characters that could be a command */
+#define FPTR_ARRAY_SIZE (LAST_ASCII_CHAR - FIRST_ASCII_CHAR + 1) 
+static fptr_t fptr_table[FPTR_ARRAY_SIZE];
+
+static int fp_hash(char c) {
+	return c % FIRST_ASCII_CHAR;
+}
+
+static void fp_assign(char c, fptr_t fn) {
+	fptr_table[fp_hash(c)] = fn;
+}
+
+void fptr_init() {
+	fp_assign('a', ed_append);
+}
+	
+
 void eval(parse_t *pt) {
 	printf("node from: %s", ll_s(pt->from));
 	printf("node to: %s", ll_s(pt->to));
 	printf("command : %c\n", pt->command);
 	printf("arguments : %s", pt->argument);
 #if 0
+	fptr_table[fp_hash(pt->command)](pt->from, pt->to, pt->argument);
 
 	switch(pt->command) {
 		case 'a':
