@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #include "io.h"
 #include "ll.h"
@@ -22,8 +23,11 @@ ssize_t io_read_line(char **line, size_t *linecap, FILE *fp, char *prompt) {
 }
 
 
-int io_write_line(FILE *fp, char *line) {
-	int bytes_read = fprintf(fp, "%s", line);
+int io_write_line(FILE *fp, const char *fmt, ...) {
+	va_list ap;
+	va_start(ap, fmt);
+	int bytes_read = vfprintf(stderr, fmt, ap);
+	va_end(ap);
 #if (ED_FLUSH_OUTPUT == 1)
 	fflush(fp);
 #endif

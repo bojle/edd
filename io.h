@@ -11,7 +11,7 @@ void io_write_file(char *filename);
 
 /* getline() wrapper */
 ssize_t io_read_line(char **line, size_t *linecap, FILE *fp, char *prompt);
-/* fprintf() wrapper. Assumes 'fp' is writable */
-int io_write_line(FILE *fp, char *line);
+/* printf() wrapper */
+int io_write_line(FILE *fp, const char *fmt, ...);
 
 #endif

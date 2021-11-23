@@ -203,8 +203,8 @@ void eval(parse_t *pt) {
 	printf("node to: %s", ll_s(pt->to));
 	printf("command : %c\n", pt->command);
 	printf("arguments : %s\n", pt->argument);
-#if 0
 	fptr_table[fp_hash(pt->command)](pt->from, pt->to, pt->argument);
+#if 0
 
 	switch(pt->command) {
 		case 'a':
