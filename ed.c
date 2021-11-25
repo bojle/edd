@@ -9,6 +9,7 @@ void ed_append(node_t *from, node_t *to, char *rest) {
 	size_t bytes = 0;
 	size_t lines = 0;
 	size_t linecap;
+	from = ll_prev(from, 1);
 	while ((bytes = io_read_line(&line, &linecap, stdin, NULL)) > 0) {
 		if (line[0] == '.')
 			break;
@@ -21,13 +22,14 @@ void ed_append(node_t *from, node_t *to, char *rest) {
 }
 
 void ed_print(node_t *from, node_t *to, char *rest) {
-
-	if (from == global_head()) {
-		from = ll_next(global_head(), 1);
-	}
-	to = ll_next(to, 1);
+	to = (to == global_tail() ? to : ll_next(to, 1));
+	from = (from == global_tail() ? ll_prev(from, 1) : from);
 	while (from != to) {
 		io_write_line(stdout, "%s", ll_s(from));
 		from = ll_next(from, 1);
 	}
+}
+
+void ed_delete(node_t *from, node_t *to, char *rest) {
+	
 }

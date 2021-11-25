@@ -33,7 +33,7 @@ static parse_t pt;
 parse_t *parse(char *exp) {
 	/* defaults */
 	pt.from = global_current();
-	pt.to = ll_prev(global_tail(), 1);
+	pt.to = ll_last_node();
 	pt.command = '\0';
 	pt.argument = NULL;
 
@@ -72,10 +72,18 @@ static char *regerror_aux(int errcode, regex_t *reg) {
  * populate the 'from' and 'to' pointers of a parse_t 
  * object, return a pointer to the expression where the 
  * address ends
+ *
+ * Addresses -> correspondence
+ * n (where n is an integer) -> nth line of the file
+ * $ -> gbl_tail_node
+ * . -> gbl_current_node
+ * , -> 1st node to $th node
+ *
  */
 char *parse_address(parse_t *pt, char *addr) {
 	bool commapassed = false;
 	regex_t reg;
+	int digits_encountered = 0;
 	for (; isaddresschar(addr); addr++) {
 		long num = 1;
 		char *start = NULL;
@@ -90,20 +98,20 @@ char *parse_address(parse_t *pt, char *addr) {
 				break;
 			case '$':
 				if (commapassed) { 
-					pt->to = ll_prev(global_tail(), 1);
+					pt->to = global_tail();
 				}
 				else { 
-					pt->from = ll_prev(global_tail(), 1);
+					pt->from = global_tail();
 				}
 				break;
 			case ',': 
 				if (!isaddresschar(addr+1)) { 
 					 /* ,s/dog/cat/   -- here range is from head to tail
 					  * this if block checks for such cases */
-					pt->to = ll_prev(global_tail(), 1);
+					pt->to = ll_last_node();
 				}
 				if (!isaddresschar(addr-1)) {
-					pt->from = global_head();
+					pt->from = ll_first_node();
 				}
 				commapassed = true;
 				break;
@@ -137,7 +145,7 @@ char *parse_address(parse_t *pt, char *addr) {
 				break;
 			case ';':
 				pt->from = global_current();
-				pt->to = ll_prev(global_tail(), 1);
+				pt->to = ll_last_node();
 				break;
 			case '/':
 				start = addr+1;
@@ -167,12 +175,21 @@ char *parse_address(parse_t *pt, char *addr) {
 						pt->from = ll_at(num);
 					}
 					addr--;
+					digits_encountered++;
 				}
 				else {
 					// TODO: error checking here. Invalid address caracter
 				}
 		}
 	}
+	if (digits_encountered == 1) {
+		if (!commapassed) {
+			pt->to = pt->from;
+		}
+	}
+
+
+
 	return addr;
 }
 
@@ -199,6 +216,7 @@ static void fp_assign(char c, fptr_t fn) {
 void fptr_init() {
 	fp_assign('a', ed_append);
 	fp_assign('p', ed_print);
+	fp_assign('d', ed_delete);
 }
 	
 

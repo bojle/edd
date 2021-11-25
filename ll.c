@@ -135,7 +135,7 @@ char *ll_s(node_t *node) {
 
 /* This is the only function that is aware of "indexes" */
 node_t *ll_at(int n) {
-	return ll_next(gbl_head_node, n - ED_INDEXING);
+	return ll_next(ll_first_node(), n - ED_INDEXING);
 }
 
 node_t *ll_attach_nodes(node_t *n1, node_t *n2) {
@@ -174,8 +174,6 @@ node_t *global_head() {
 }
 
 node_t *global_current() {
-	if (gbl_current_node == gbl_tail_node)
-		gbl_current_node = gbl_tail_node->prev;
 	return gbl_current_node;
 }
 node_t *global_tail() {
@@ -184,4 +182,12 @@ node_t *global_tail() {
 
 ssize_t ll_node_size(node_t *node) {
 	return node->size;
+}
+
+node_t *ll_first_node() {
+	return gbl_head_node->next;
+}
+
+node_t *ll_last_node() {
+	return gbl_tail_node->prev;
 }

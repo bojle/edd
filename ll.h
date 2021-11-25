@@ -65,4 +65,7 @@ char *ll_s(node_t *node);
 
 ssize_t ll_node_size(node_t *node);
 
+node_t *ll_first_node();
+node_t *ll_last_node();
+
 #endif
