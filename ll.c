@@ -91,7 +91,7 @@ node_t *ll_remove_node(node_t *node) {
 }	
 	
 node_t *ll_next(node_t *node, int offset) {
-	while (/*node->next != gbl_tail_node &&*/ node->next != NULL && offset > 0) {
+	while (node != global_tail() && offset > 0) {
 		node = node->next;
 		offset--;
 	}
@@ -100,7 +100,7 @@ node_t *ll_next(node_t *node, int offset) {
 }
 
 node_t *ll_prev(node_t *node, int offset) {
-	while (/*node->prev != gbl_head_node &&*/ node->prev != NULL && offset > 0) {
+	while (node != global_head() && offset > 0) {
 		node = node->prev;
 		offset--;
 	}
@@ -135,7 +135,7 @@ char *ll_s(node_t *node) {
 
 /* This is the only function that is aware of "indexes" */
 node_t *ll_at(int n) {
-	return ll_next(gbl_head_node->next, n - ED_INDEXING);
+	return ll_next(gbl_head_node, n - ED_INDEXING);
 }
 
 node_t *ll_attach_nodes(node_t *n1, node_t *n2) {
@@ -174,6 +174,8 @@ node_t *global_head() {
 }
 
 node_t *global_current() {
+	if (gbl_current_node == gbl_tail_node)
+		gbl_current_node = gbl_tail_node->prev;
 	return gbl_current_node;
 }
 node_t *global_tail() {

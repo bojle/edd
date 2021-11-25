@@ -32,7 +32,7 @@ static parse_t pt;
 
 parse_t *parse(char *exp) {
 	/* defaults */
-	pt.from = ll_next(global_head(), 1);
+	pt.from = global_current();
 	pt.to = ll_prev(global_tail(), 1);
 	pt.command = '\0';
 	pt.argument = NULL;
@@ -90,16 +90,19 @@ char *parse_address(parse_t *pt, char *addr) {
 				break;
 			case '$':
 				if (commapassed) { 
-					pt->to = global_tail();
+					pt->to = ll_prev(global_tail(), 1);
 				}
 				else { 
-					pt->from = global_tail();
+					pt->from = ll_prev(global_tail(), 1);
 				}
 				break;
 			case ',': 
 				if (!isaddresschar(addr+1)) { 
 					 /* ,s/dog/cat/   -- here range is from head to tail
 					  * this if block checks for such cases */
+					pt->to = ll_prev(global_tail(), 1);
+				}
+				if (!isaddresschar(addr-1)) {
 					pt->from = global_head();
 				}
 				commapassed = true;
@@ -134,7 +137,7 @@ char *parse_address(parse_t *pt, char *addr) {
 				break;
 			case ';':
 				pt->from = global_current();
-				pt->to = global_tail();
+				pt->to = ll_prev(global_tail(), 1);
 				break;
 			case '/':
 				start = addr+1;
@@ -195,6 +198,7 @@ static void fp_assign(char c, fptr_t fn) {
 
 void fptr_init() {
 	fp_assign('a', ed_append);
+	fp_assign('p', ed_print);
 }
 	
 
@@ -203,6 +207,7 @@ void eval(parse_t *pt) {
 	printf("node to: %s", ll_s(pt->to));
 	printf("command : %c\n", pt->command);
 	printf("arguments : %s\n", pt->argument);
+	printf("size: %ld\n", ll_node_size(pt->from));
 	fptr_table[fp_hash(pt->command)](pt->from, pt->to, pt->argument);
 #if 0
 

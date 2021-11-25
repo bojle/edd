@@ -5,7 +5,6 @@
 #include "io.h"
 
 void ed_append(node_t *from, node_t *to, char *rest) {
-#if 0
 	char *line = NULL;
 	size_t bytes = 0;
 	size_t lines = 0;
@@ -19,10 +18,16 @@ void ed_append(node_t *from, node_t *to, char *rest) {
 	}
 	printf("%ld line%s appended\n", lines, (lines==1)?"":"s");
 	free(line);
-#endif 
-	printf("ed_apppend() has been called\n");
 }
 
-//void ed_subs(node_t *from, node_t *to, char *rest) {
+void ed_print(node_t *from, node_t *to, char *rest) {
 
-	
+	if (from == global_head()) {
+		from = ll_next(global_head(), 1);
+	}
+	to = ll_next(to, 1);
+	while (from != to) {
+		io_write_line(stdout, "%s", ll_s(from));
+		from = ll_next(from, 1);
+	}
+}
