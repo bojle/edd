@@ -77,7 +77,7 @@ static char *regerror_aux(int errcode, regex_t *reg) {
  * n (where n is an integer) -> nth line of the file
  * $ -> gbl_tail_node
  * . -> gbl_current_node
- * , -> 1st node to $th node
+ * , -> 1st node to last node
  *
  */
 char *parse_address(parse_t *pt, char *addr) {

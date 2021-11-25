@@ -31,5 +31,10 @@ void ed_print(node_t *from, node_t *to, char *rest) {
 }
 
 void ed_delete(node_t *from, node_t *to, char *rest) {
+	to = (to == global_tail() ? to : ll_next(to, 1));
+	from = (from == global_tail() ? ll_prev(from, 1) : from);
 	
+	while (from != to) {
+		from = ll_remove_node(from);
+	}	
 }
