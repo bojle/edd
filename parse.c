@@ -216,6 +216,7 @@ static void fp_assign(char c, fptr_t fn) {
 void fptr_init() {
 	fp_assign('a', ed_append);
 	fp_assign('p', ed_print);
+	fp_assign('n', ed_print_n);
 	fp_assign('d', ed_delete);
 	fp_assign('c', ed_change);
 }
