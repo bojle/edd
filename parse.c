@@ -217,6 +217,7 @@ void fptr_init() {
 	fp_assign('a', ed_append);
 	fp_assign('p', ed_print);
 	fp_assign('d', ed_delete);
+	fp_assign('c', ed_change);
 }
 	
 

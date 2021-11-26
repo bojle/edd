@@ -38,3 +38,8 @@ void ed_delete(node_t *from, node_t *to, char *rest) {
 		from = ll_remove_node(from);
 	}	
 }
+
+void ed_change(node_t *from, node_t *to, char *rest) {
+	ed_delete(from, to, rest);
+	ed_append(global_current(), NULL, NULL);
+}
