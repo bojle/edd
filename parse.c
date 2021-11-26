@@ -194,6 +194,7 @@ parse_t *pt_make() {
 	return calloc(1, sizeof(parse_t));
 }
 
+
 /* 
  * Function pointer type that takes two node_t * and a char *
  * and returns nothing
@@ -221,6 +222,7 @@ void fptr_init() {
 	fp_assign('d', ed_delete);
 	fp_assign('c', ed_change);
 	fp_assign('m', ed_move);
+	fp_assign('\n', ed_newline);
 }
 	
 

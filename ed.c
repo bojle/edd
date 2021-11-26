@@ -65,6 +65,7 @@ void ed_move(node_t *from, node_t *to, char *rest) {
 	parse_t *pt = pt_make();
 	parse_address(pt, rest);
 	node_t *move_to = pt_from(pt);
+	free(pt);
 
 	move_to = (move_to == global_tail() ? ll_last_node(): move_to);
 	node_t *move_to_subsequent = ll_next(move_to, 1);
@@ -78,4 +79,9 @@ void ed_move(node_t *from, node_t *to, char *rest) {
 	ll_attach_nodes(ll_prev(from, 1), ll_next(to, 1));
 	ll_attach_nodes(move_to, from);
 	ll_attach_nodes(to, move_to_subsequent);	
+}
+
+void ed_newline(node_t *from, node_t *to, char *rest) {
+	from = (from == global_tail() ? ll_last_node() : from);
+	ed_print(from, from, rest);
 }
