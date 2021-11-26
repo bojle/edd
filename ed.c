@@ -1,10 +1,21 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include "aux.h"
 #include "parse.h"
 #include "ll.h"
 #include "ed.h"
 #include "io.h"
+
+static char gbl_prompt[64] = ":";
+
+void set_prompt(char *s) {
+	strncpy(gbl_prompt, s, strlen(s)-1); // -1 to not include the trailing newline
+}
+
+char *get_prompt() {
+	return gbl_prompt;
+}
 
 void ed_append(node_t *from, node_t *to, char *rest) {
 	char *line = NULL;
@@ -60,8 +71,6 @@ void ed_change(node_t *from, node_t *to, char *rest) {
 void ed_move(node_t *from, node_t *to, char *rest) {
 	from = (from == global_head() ? ll_first_node() : from);
 
-	rest = skipspaces(rest);
-
 	parse_t *pt = pt_make();
 	parse_address(pt, rest);
 	node_t *move_to = pt_from(pt);
@@ -85,3 +94,8 @@ void ed_newline(node_t *from, node_t *to, char *rest) {
 	from = (from == global_tail() ? ll_last_node() : from);
 	ed_print(from, from, rest);
 }
+
+void ed_prompt(node_t *from, node_t *to, char *rest) {
+	set_prompt(rest);
+}	
+

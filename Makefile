@@ -7,7 +7,7 @@ objects= main.o ll.o parse.o io.o ed.o err.o aux.o
 ${exe}: ${objects}
 	${cc} ${flags} -o $@ $^ ${ldlibs}
 
-main.o: main.c ll.h parse.h io.h err.h
+main.o: main.c ll.h parse.h io.h err.h ed.h
 	${cc} ${flags} -c main.c
 
 ll.o: ll.c ll.h err.h

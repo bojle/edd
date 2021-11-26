@@ -2,17 +2,18 @@
 #include <setjmp.h>
 #include <stdio.h>
 #include "ll.h"
+#include "ed.h"
 #include "parse.h"
 #include "io.h"
 
-char gbl_prompt[64] = ":";
 jmp_buf to_repl;
+
 
 void repl() {
 	char *line = NULL;
 	size_t linecap;
 	setjmp(to_repl);
-	while (io_read_line(&line, &linecap, stdin, gbl_prompt) > 0) {
+	while (io_read_line(&line, &linecap, stdin, get_prompt()) > 0) {
 		eval(parse(line));
 	}
 	free(line);
