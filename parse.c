@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include "aux.h"
 
 
 /* 
@@ -42,14 +43,6 @@ parse_t *parse(char *exp) {
 	pt.command = *exp++;
 	pt.argument = skipspaces(exp);
 	return &pt;
-}
-
-char *skipspaces(char *s) {
-	if (! isspace(*s))
-		return s;
-	while (isspace(*s))
-		s++;
-	return s;
 }
 
 int isaddresschar(char *a) {
@@ -193,6 +186,14 @@ char *parse_address(parse_t *pt, char *addr) {
 	return addr;
 }
 
+node_t *pt_from(parse_t *pt) {
+	return pt->from;
+}
+
+parse_t *pt_make() {
+	return calloc(1, sizeof(parse_t));
+}
+
 /* 
  * Function pointer type that takes two node_t * and a char *
  * and returns nothing
@@ -219,6 +220,7 @@ void fptr_init() {
 	fp_assign('n', ed_print_n);
 	fp_assign('d', ed_delete);
 	fp_assign('c', ed_change);
+	fp_assign('m', ed_move);
 }
 	
 

@@ -1,6 +1,8 @@
 #ifndef PARSE_H
 #define PARSE_H
 
+#include "ll.h"
+
 /*
  * parse and eval are the two major functions in parse.h
  * parse() does not fully parse an expression. since, each 
@@ -23,6 +25,9 @@ parse_t *parse(char *exp);
 char *parse_address(parse_t *pt, char *addr);
 int isaddresschar(char *a);
 char *skipspaces(char *s);
+
+node_t *pt_from(parse_t *pt);
+parse_t *pt_make();
 
 /* eval */
 void eval(parse_t *pt);

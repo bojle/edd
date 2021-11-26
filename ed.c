@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "aux.h"
+#include "parse.h"
 #include "ll.h"
 #include "ed.h"
 #include "io.h"
@@ -53,4 +55,27 @@ void ed_delete(node_t *from, node_t *to, char *rest) {
 void ed_change(node_t *from, node_t *to, char *rest) {
 	ed_delete(from, to, rest);
 	ed_append(global_current(), NULL, NULL);
+}
+
+void ed_move(node_t *from, node_t *to, char *rest) {
+	from = (from == global_head() ? ll_first_node() : from);
+
+	rest = skipspaces(rest);
+
+	parse_t *pt = pt_make();
+	parse_address(pt, rest);
+	node_t *move_to = pt_from(pt);
+
+	move_to = (move_to == global_tail() ? ll_last_node(): move_to);
+	node_t *move_to_subsequent = ll_next(move_to, 1);
+
+	/* 
+	 * from->prev <-> to->next
+	 * move_to <-> from 
+	 * to <-> move_to_subsequent
+	 */	
+
+	ll_attach_nodes(ll_prev(from, 1), ll_next(to, 1));
+	ll_attach_nodes(move_to, from);
+	ll_attach_nodes(to, move_to_subsequent);	
 }
