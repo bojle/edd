@@ -14,5 +14,6 @@ void ed_change(node_t *from, node_t *to, char *rest);
 void ed_move(node_t *from, node_t *to, char *rest);
 void ed_newline(node_t *from, node_t *to, char *rest);
 void ed_prompt(node_t *from, node_t *to, char *rest);
+void ed_insert(node_t *from, node_t *to, char *rest);
 
 #endif

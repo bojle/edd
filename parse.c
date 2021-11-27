@@ -224,6 +224,7 @@ void fptr_init() {
 	fp_assign('m', ed_move);
 	fp_assign('\n', ed_newline);
 	fp_assign('P', ed_prompt);
+	fp_assign('i', ed_insert);
 }
 	
 

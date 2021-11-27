@@ -22,7 +22,6 @@ void ed_append(node_t *from, node_t *to, char *rest) {
 	size_t bytes = 0;
 	size_t lines = 0;
 	size_t linecap;
-	from = ll_prev(from, 1);
 	while ((bytes = io_read_line(&line, &linecap, stdin, NULL)) > 0) {
 		if (line[0] == '.')
 			break;
@@ -31,6 +30,23 @@ void ed_append(node_t *from, node_t *to, char *rest) {
 		bytes += bytes;
 	}
 	printf("%ld line%s appended\n", lines, (lines==1)?"":"s");
+	free(line);
+}
+
+void ed_insert(node_t *from, node_t *to, char *rest) {
+	char *line = NULL;
+	size_t bytes = 0;
+	size_t lines = 0;
+	size_t linecap;
+	from = ll_prev(from, 1);
+	while ((bytes = io_read_line(&line, &linecap, stdin, NULL)) > 0) {
+		if (line[0] == '.')
+			break;
+		from = ll_add_next(from, line);
+		lines++;
+		bytes += bytes;
+	}
+	printf("%ld line%s inserted\n", lines, (lines==1)?"":"s");
 	free(line);
 }
 
@@ -98,4 +114,5 @@ void ed_newline(node_t *from, node_t *to, char *rest) {
 void ed_prompt(node_t *from, node_t *to, char *rest) {
 	set_prompt(rest);
 }	
+
 
