@@ -17,5 +17,6 @@ extern jmp_buf to_repl;
 
 void err_normal(jmp_buf *buf, const char *fmt, ...);
 void err_fatal(const char *fmt, ...);
+char *regerror_aux(int errcode, regex_t *reg);
 
 #endif

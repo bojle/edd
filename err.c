@@ -21,3 +21,10 @@ void err_fatal(const char *fmt, ...) {
 	fflush(stderr);
 	exit(EXIT_FAILURE);
 }	
+
+char *regerror_aux(int errcode, regex_t *reg) {
+	static char reg_str[128];
+	regerror(errcode, reg, reg_str, 128);
+	regfree(reg);
+	return reg_str;
+}

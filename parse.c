@@ -53,13 +53,6 @@ int isaddresschar(char *a) {
 	return 0;
 }
 
-static char *regerror_aux(int errcode, regex_t *reg) {
-	static char reg_str[128];
-	regerror(errcode, reg, reg_str, 128);
-	regfree(reg);
-	return reg_str;
-}
-
 
 /* 
  * populate the 'from' and 'to' pointers of a parse_t 
@@ -225,6 +218,7 @@ void fptr_init() {
 	fp_assign('\n', ed_newline);
 	fp_assign('P', ed_prompt);
 	fp_assign('i', ed_insert);
+	fp_assign('f', ed_file);
 }
 	
 

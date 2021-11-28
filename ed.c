@@ -1,20 +1,66 @@
 #include <stdio.h>
+#include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 #include "aux.h"
 #include "parse.h"
 #include "ll.h"
 #include "ed.h"
 #include "io.h"
+#include "err.h"
 
-static char gbl_prompt[64] = ":";
+#define ED_PROMPT_SIZE 64
+static char gbl_prompt[ED_PROMPT_SIZE] = ":";
+
+#define ED_DEFAULT_FILENAME_SIZE 4096
+static char gbl_default_filename[ED_DEFAULT_FILENAME_SIZE];
 
 void set_prompt(char *s) {
-	strncpy(gbl_prompt, s, strlen(s)-1); // -1 to not include the trailing newline
+	size_t sz = strlen(s);
+	if (sz >= ED_PROMPT_SIZE) {
+		err_normal(&to_repl, 
+				"ERR: Prompt string should not be more than %d characters\n", 
+				ED_PROMPT_SIZE-1);
+	}
+	strncpy(gbl_prompt, s, (sz-1)); // -1 to not include the trailing newline
+	gbl_prompt[sz - 1] = '\0';
 }
 
 char *get_prompt() {
 	return gbl_prompt;
+}
+
+void set_default_filename(char *s) {
+	size_t size = strlen(s);
+	if (size >= ED_DEFAULT_FILENAME_SIZE) {
+		err_normal(&to_repl, 
+				"ERR: Filename should not be more than %d characters\n", 
+				ED_DEFAULT_FILENAME_SIZE-1);
+	}
+	strncpy(gbl_default_filename, s, size-1);
+	gbl_prompt[size - 1] = '\0';
+}
+
+char *get_default_filename() {
+	return gbl_default_filename;
+}
+
+FILE *shopen(char *cmd) {
+	regex_t rt;
+	int err;
+
+	/* Replace all '%' in 'cmd' with the default filename */
+	if ((err = regcomp(&rt, "%", 0)) != 0) {
+		err(&to_repl, regerror_aux(err, &rt));
+	}
+	cmd = strrep(cmd, &rt, get_default_filename(), 1);
+
+	FILE *fp = popen(cmd, "r");
+	if (fp == NULL) {
+		err(&to_repl, strerror(errno));
+	}
+	return fp;
 }
 
 void ed_append(node_t *from, node_t *to, char *rest) {
@@ -38,6 +84,7 @@ void ed_insert(node_t *from, node_t *to, char *rest) {
 	size_t bytes = 0;
 	size_t lines = 0;
 	size_t linecap;
+	/* This line makes ed_insert different from ed_append */
 	from = ll_prev(from, 1);
 	while ((bytes = io_read_line(&line, &linecap, stdin, NULL)) > 0) {
 		if (line[0] == '.')
@@ -115,4 +162,21 @@ void ed_prompt(node_t *from, node_t *to, char *rest) {
 	set_prompt(rest);
 }	
 
+void ed_shell(node_t *from, node_t *to, char *rest) {
 
+
+
+}
+void ed_edit(node_t *from, node_t *to, char *rest) {
+	// :e! command
+	// :e FILE
+	
+}
+
+void ed_file(node_t *from, node_t *to, char *rest) {
+	if (!isalnum(*rest)) {
+		io_write_line(stdout, "%s\n", get_default_filename());
+		return;
+	}
+	set_default_filename(rest);
+}
