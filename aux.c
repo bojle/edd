@@ -1,6 +1,9 @@
 #include "aux.h"
 #include <ctype.h>
 #include <string.h>
+#include <stdlib.h>
+
+#define REPLIM 200
 
 char *skipspaces(char *s) {
 	if (!isspace(*s) || *s == '\n')
@@ -44,7 +47,7 @@ char *strncata(char *dest, char *src, int n) {
  * regcat() cats `dest` and `with` with '&'s in `with` replaced by `repstring`
  */
 char * regcat(char *dest, char *with, char *repstring, int *substrsizes) {
-	while (*dest) dest++;
+	//while (*dest) dest++;
 
 	for (int i = 0; *with; ) {
 		if (*with == '&') {
@@ -112,7 +115,7 @@ int rep_substr_sz(char *substr, int *substrsizes, int totalreps) {
  * Returns an allocated string, must be freed by the user.
  */
 char *strrep(char *str, regex_t *rep, char *with, _Bool matchall) {
-	/* Replacement happens in two passes over `str`
+	/* replaces in two passes over `str`
 	 * first pass: mark what has to be replaced
 	 * second pass: replace
 	 */
@@ -174,6 +177,6 @@ char *strrep(char *str, regex_t *rep, char *with, _Bool matchall) {
 		retn++;
 		str++;
 	}
-	//free(strstart);
+	free(strstart);
 	return sretn;
 }

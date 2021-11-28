@@ -9,7 +9,9 @@ void err_normal(jmp_buf *buf, const char *fmt, ...) {
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	fflush(stderr);
-	longjmp(*buf, 1); 
+	if (buf != NULL) {
+		longjmp(*buf, 1); 
+	}
 }
 
 

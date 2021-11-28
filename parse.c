@@ -219,6 +219,7 @@ void fptr_init() {
 	fp_assign('P', ed_prompt);
 	fp_assign('i', ed_insert);
 	fp_assign('f', ed_file);
+	fp_assign('!', ed_shell);
 }
 	
 

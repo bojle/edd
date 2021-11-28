@@ -2,6 +2,7 @@
 #define ERR_H
 
 #include <setjmp.h>
+#include <regex.h>
 
 extern jmp_buf to_repl;
 

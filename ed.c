@@ -16,6 +16,9 @@ static char gbl_prompt[ED_PROMPT_SIZE] = ":";
 #define ED_DEFAULT_FILENAME_SIZE 4096
 static char gbl_default_filename[ED_DEFAULT_FILENAME_SIZE];
 
+static char *ed_shell_command_buf;
+static size_t ed_shell_command_buf_sz;
+
 void set_prompt(char *s) {
 	size_t sz = strlen(s);
 	if (sz >= ED_PROMPT_SIZE) {
@@ -39,28 +42,48 @@ void set_default_filename(char *s) {
 				ED_DEFAULT_FILENAME_SIZE-1);
 	}
 	strncpy(gbl_default_filename, s, size-1);
-	gbl_prompt[size - 1] = '\0';
+	gbl_default_filename[size - 1] = '\0';
 }
 
 char *get_default_filename() {
 	return gbl_default_filename;
 }
 
-FILE *shopen(char *cmd) {
+FILE *shopen(char *cmd, char *mode) {
 	regex_t rt;
 	int err;
 
-	/* Replace all '%' in 'cmd' with the default filename */
-	if ((err = regcomp(&rt, "%", 0)) != 0) {
+	/* Replace all unescaped '%' in 'cmd' with the default filename */
+	if ((err = regcomp(&rt, "[^\\]%", 0)) != 0) {
 		err(&to_repl, regerror_aux(err, &rt));
 	}
 	cmd = strrep(cmd, &rt, get_default_filename(), 1);
 
-	FILE *fp = popen(cmd, "r");
+	FILE *fp = popen(cmd, mode);
+
+	set_command_buf(cmd);
+
 	if (fp == NULL) {
-		err(&to_repl, strerror(errno));
+		err(NULL, strerror(errno));
 	}
 	return fp;
+}
+
+void set_command_buf(char *cmd) {
+	if (cmd == ed_shell_command_buf) {
+		return;
+	}
+
+	size_t sz = strlen(cmd);
+	if (sz > ed_shell_command_buf_sz) {
+		ed_shell_command_buf = realloc(ed_shell_command_buf, sz);
+	}
+	strncpy(ed_shell_command_buf, cmd, sz - 1);
+	ed_shell_command_buf[sz - 1] = '\0';
+}
+
+char *get_command_buf() {
+	return ed_shell_command_buf;
 }
 
 void ed_append(node_t *from, node_t *to, char *rest) {
@@ -163,10 +186,22 @@ void ed_prompt(node_t *from, node_t *to, char *rest) {
 }	
 
 void ed_shell(node_t *from, node_t *to, char *rest) {
+	if (*rest == '!') {
+		rest = get_command_buf();
+	}
+	FILE *fp = shopen(rest, "r");
+	io_write_line(stdout, "%s\n", get_command_buf());
 
-
-
+	char *line = NULL;
+	size_t linecap;
+	while (io_read_line(&line, &linecap, fp, NULL) > 0) {
+		io_write_line(stdout, "%s", line);
+	}
+	io_write_line(stdout, "!\n");
+	free(line);
+	pclose(fp);
 }
+
 void ed_edit(node_t *from, node_t *to, char *rest) {
 	// :e! command
 	// :e FILE
