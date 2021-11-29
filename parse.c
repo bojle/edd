@@ -189,8 +189,8 @@ parse_t *pt_make() {
 
 
 /* 
- * Function pointer type that takes two node_t * and a char *
- * and returns nothing
+ * Function pointer type for functions of of this prototype:
+ * 		void foo(node_t *, node_t *, char *)
  */
 typedef void (*fptr_t) (node_t *, node_t *, char *);
 
@@ -201,7 +201,7 @@ typedef void (*fptr_t) (node_t *, node_t *, char *);
 static fptr_t fptr_table[FPTR_ARRAY_SIZE];
 
 static int fp_hash(char c) {
-	return c % FIRST_ASCII_CHAR;
+	return c - FIRST_ASCII_CHAR;
 }
 
 static void fp_assign(char c, fptr_t fn) {
@@ -221,6 +221,7 @@ void fptr_init() {
 	fp_assign('f', ed_file);
 	fp_assign('!', ed_shell);
 	fp_assign('e', ed_edit);
+	fp_assign('E', ed_edit_force);
 }
 	
 

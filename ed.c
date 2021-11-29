@@ -19,6 +19,8 @@ static char gbl_default_filename[ED_DEFAULT_FILENAME_SIZE];
 static char *ed_shell_command_buf;
 static size_t ed_shell_command_buf_sz;
 
+static _Bool gbl_saved = 0;
+
 void set_prompt(char *s) {
 	size_t sz = strlen(s);
 	if (sz >= ED_PROMPT_SIZE) {
@@ -61,6 +63,7 @@ void set_command_buf(char *cmd) {
 	size_t sz = strlen(cmd);
 	if (sz > ed_shell_command_buf_sz) {
 		ed_shell_command_buf = realloc(ed_shell_command_buf, sz);
+		ed_shell_command_buf_sz = sz;
 	}
 	strncpy(ed_shell_command_buf, cmd, sz - 1);
 	ed_shell_command_buf[sz - 1] = '\0';
@@ -71,6 +74,7 @@ char *get_command_buf() {
 }
 
 void ed_append(node_t *from, node_t *to, char *rest) {
+	from = (from == global_tail() ? ll_last_node() : from);
 	char *line = NULL;
 	size_t bytes = 0;
 	size_t lines = 0;
@@ -84,9 +88,11 @@ void ed_append(node_t *from, node_t *to, char *rest) {
 	}
 	printf("%ld line%s appended\n", lines, (lines==1)?"":"s");
 	free(line);
+	gbl_saved = 0;
 }
 
 void ed_insert(node_t *from, node_t *to, char *rest) {
+	from = (from == global_tail() ? ll_last_node() : from);
 	char *line = NULL;
 	size_t bytes = 0;
 	size_t lines = 0;
@@ -102,6 +108,7 @@ void ed_insert(node_t *from, node_t *to, char *rest) {
 	}
 	printf("%ld line%s inserted\n", lines, (lines==1)?"":"s");
 	free(line);
+	gbl_saved = 0;
 }
 
 void ed_print(node_t *from, node_t *to, char *rest) {
@@ -131,11 +138,13 @@ void ed_delete(node_t *from, node_t *to, char *rest) {
 	while (from != to) {
 		from = ll_remove_node(from);
 	}	
+	gbl_saved = 0;
 }
 
 void ed_change(node_t *from, node_t *to, char *rest) {
 	ed_delete(from, to, rest);
 	ed_append(global_current(), NULL, NULL);
+	gbl_saved = 0;
 }
 
 void ed_move(node_t *from, node_t *to, char *rest) {
@@ -158,6 +167,7 @@ void ed_move(node_t *from, node_t *to, char *rest) {
 	ll_attach_nodes(ll_prev(from, 1), ll_next(to, 1));
 	ll_attach_nodes(move_to, from);
 	ll_attach_nodes(to, move_to_subsequent);	
+	gbl_saved = 0;
 }
 
 void ed_newline(node_t *from, node_t *to, char *rest) {
@@ -187,8 +197,10 @@ void ed_shell(node_t *from, node_t *to, char *rest) {
 }
 
 void ed_edit(node_t *from, node_t *to, char *rest) {
-	// :e! command
-	// :e FILE
+	if (!gbl_saved) {
+		err_normal(&to_repl, "%s", 
+				"No write since last change. Use 'E' to override or save changes.\n");
+	}
 	FILE *fp;
 	if (*rest == '!') {
 		rest++;
@@ -206,9 +218,18 @@ void ed_edit(node_t *from, node_t *to, char *rest) {
 		node = ll_remove_node(node);
 	}
 	io_load_file(fp);
+	gbl_saved = 1;
 }
 
+void ed_edit_force(node_t *from, node_t *to, char *rest) {
+	gbl_saved = 1;
+	printf("inside edit_force\n");
+	ed_edit(from, to, rest);
+}
+
+
 void ed_file(node_t *from, node_t *to, char *rest) {
+	printf("inside ed_file\n");
 	if (!isalnum(*rest)) {
 		io_write_line(stdout, "%s\n", get_default_filename());
 		return;
