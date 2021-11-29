@@ -191,3 +191,21 @@ node_t *ll_first_node() {
 node_t *ll_last_node() {
 	return gbl_tail_node->prev;
 }
+
+/* Concatenate strings of n1 and n2, delete n2 */
+node_t *ll_join_nodes(node_t *n1, node_t *n2) {
+	n1->s[n1->size - 1] = '\0';
+	n1->size--;
+
+	size_t new_sz = n1->size + n2->size;
+
+	n1->s = realloc(n1->s, (new_sz + 1) * sizeof(*(n1->s)) );
+	if (n1->s == NULL) {
+		err(&to_repl, strerror(errno));
+	}
+	n1->size = new_sz;
+	strncat(n1->s, n2->s, n2->size);
+	ll_remove_node(n2);
+	gbl_current_node = n1;
+	return n1;
+}

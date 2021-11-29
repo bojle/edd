@@ -25,5 +25,6 @@ void ed_shell(node_t *from, node_t *to, char *rest);
 void ed_edit(node_t *from, node_t *to, char *rest);
 void ed_edit_force(node_t *from, node_t *to, char *rest);
 void ed_file(node_t *from, node_t *to, char *rest);
+void ed_join(node_t *from, node_t *to, char *rest);
 
 #endif

@@ -222,6 +222,7 @@ void fptr_init() {
 	fp_assign('!', ed_shell);
 	fp_assign('e', ed_edit);
 	fp_assign('E', ed_edit_force);
+	fp_assign('j', ed_join);
 }
 	
 

@@ -236,3 +236,15 @@ void ed_file(node_t *from, node_t *to, char *rest) {
 	}
 	set_default_filename(rest);
 }
+
+void ed_join(node_t *from, node_t *to, char *rest) {
+	node_t *from_next = ll_next(from, 1);
+	to = (to == global_tail() ? to : ll_next(to, 1));
+
+	while (from_next != to) {
+		ll_join_nodes(from, from_next);
+		from_next = ll_next(from, 1);
+	}
+	gbl_saved = 0;
+}
+

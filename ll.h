@@ -68,4 +68,5 @@ ssize_t ll_node_size(node_t *node);
 node_t *ll_first_node();
 node_t *ll_last_node();
 
+node_t *ll_join_nodes(node_t *n1, node_t *n2);
 #endif
