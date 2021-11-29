@@ -26,8 +26,10 @@ void set_prompt(char *s) {
 				"ERR: Prompt string should not be more than %d characters\n", 
 				ED_PROMPT_SIZE-1);
 	}
-	strncpy(gbl_prompt, s, (sz-1)); // -1 to not include the trailing newline
-	gbl_prompt[sz - 1] = '\0';
+	strncpy(gbl_prompt, s, sz); 
+	if (gbl_prompt[sz - 1] == '\n') {
+		gbl_prompt[sz - 1] = '\0';
+	}
 }
 
 char *get_prompt() {
@@ -41,32 +43,14 @@ void set_default_filename(char *s) {
 				"ERR: Filename should not be more than %d characters\n", 
 				ED_DEFAULT_FILENAME_SIZE-1);
 	}
-	strncpy(gbl_default_filename, s, size-1);
-	gbl_default_filename[size - 1] = '\0';
+	strncpy(gbl_default_filename, s, size);
+	if (gbl_default_filename[size - 1] == '\n') {
+		gbl_default_filename[size - 1] = '\0';
+	}
 }
 
 char *get_default_filename() {
 	return gbl_default_filename;
-}
-
-FILE *shopen(char *cmd, char *mode) {
-	regex_t rt;
-	int err;
-
-	/* Replace all unescaped '%' in 'cmd' with the default filename */
-	if ((err = regcomp(&rt, "[^\\]%", 0)) != 0) {
-		err(&to_repl, regerror_aux(err, &rt));
-	}
-	cmd = strrep(cmd, &rt, get_default_filename(), 1);
-
-	FILE *fp = popen(cmd, mode);
-
-	set_command_buf(cmd);
-
-	if (fp == NULL) {
-		err(NULL, strerror(errno));
-	}
-	return fp;
 }
 
 void set_command_buf(char *cmd) {
@@ -205,7 +189,23 @@ void ed_shell(node_t *from, node_t *to, char *rest) {
 void ed_edit(node_t *from, node_t *to, char *rest) {
 	// :e! command
 	// :e FILE
-	
+	FILE *fp;
+	if (*rest == '!') {
+		rest++;
+		rest = skipspaces(rest);
+		if (*rest == '!') {
+			rest = get_command_buf();
+		}
+		fp = shopen(rest, "r");
+	}
+	else {
+		fp = fileopen(rest, "r");
+	}
+	node_t *node = ll_first_node();
+	while (node != global_tail()) {
+		node = ll_remove_node(node);
+	}
+	io_load_file(fp);
 }
 
 void ed_file(node_t *from, node_t *to, char *rest) {

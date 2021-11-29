@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
 	fptr_init();
 	atexit(ll_free);
 	argv[1] = "man.txt";
-	io_load_file(argv[1]);
+	io_load_file(fileopen(argv[1], "r"));
 	repl();
 	ll_free();
 }

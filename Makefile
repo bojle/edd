@@ -22,7 +22,7 @@ ed.o: ed.c ed.h ll.h io.h aux.h parse.h
 parse.o: parse.c parse.h ll.h aux.h
 	${cc} ${flags} -c parse.c 
 
-io.o: io.c io.h ll.h err.h
+io.o: io.c io.h ll.h err.h ed.h aux.h
 	${cc} ${flags} -c io.c 
 
 aux.o: aux.c aux.h

@@ -3,9 +3,10 @@
 
 /* fopen() wrapper */
 FILE *fileopen(char *filename, char *mode);
+FILE *shopen(char *cmd, char *mode);
 
-/* Load 'filename' in the global list */
-void io_load_file(char *filename);
+/* Load 'fp' in the global list */
+void io_load_file(FILE *fp);
 /* Write the global list to 'filename' */
 void io_write_file(char *filename);
 

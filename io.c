@@ -5,6 +5,8 @@
 #include "io.h"
 #include "ll.h"
 #include "err.h"
+#include "ed.h"
+#include "aux.h"
 
 #include <errno.h>
 #include <string.h>
@@ -35,13 +37,14 @@ int io_write_line(FILE *fp, const char *fmt, ...) {
 }
 
 
-void io_load_file(char *filename) {
-	FILE *fp = fileopen(filename, "r");
+void io_load_file(FILE *fp) {
+	//FILE *fp = fileopen(filename, "r");
 
 	char *line = NULL;
 	size_t linecap;
+	node_t *node = global_head();
 	while (io_read_line(&line, &linecap, fp, NULL) > 0) {
-		ll_add_next(global_current(), line);
+		node = ll_add_next(node, line);
 	}
 	free(line);
 	fclose(fp);
@@ -62,9 +65,40 @@ void io_write_file(char *filename) {
 
 
 FILE *fileopen(char *filename, char *mode) {
-	FILE *fp = fopen(filename, mode);
+	regex_t rt;
+	int err;
+
+	/* Replace all unescaped '%' in 'cmd' with the default filename */
+	if ((err = regcomp(&rt, "[^\\]%", 0)) != 0) {
+		err(&to_repl, regerror_aux(err, &rt));
+	}
+	filename = strrep(filename, &rt, get_default_filename(), 1);
+
+	set_default_filename(filename);
+	FILE *fp = fopen(get_default_filename(), mode);
+
 	if (fp == NULL) {
 		err(&to_repl, strerror(errno));
+	}
+	return fp;
+}
+
+FILE *shopen(char *cmd, char *mode) {
+	regex_t rt;
+	int err;
+
+	/* Replace all unescaped '%' in 'cmd' with the default filename */
+	if ((err = regcomp(&rt, "[^\\]%", 0)) != 0) {
+		err(&to_repl, regerror_aux(err, &rt));
+	}
+	cmd = strrep(cmd, &rt, get_default_filename(), 1);
+
+	FILE *fp = popen(cmd, mode);
+
+	set_command_buf(cmd);
+
+	if (fp == NULL) {
+		err(NULL, strerror(errno));
 	}
 	return fp;
 }
