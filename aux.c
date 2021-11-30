@@ -181,3 +181,40 @@ char *strrep(char *str, regex_t *rep, char *with, _Bool matchall) {
 	return sretn;
 }
 
+/* Dynamic strings */
+
+typedef struct ds_t{
+	char *s;
+	size_t sz;
+} ds_t;
+
+ds_t *ds_make() {
+	return calloc(1, sizeof(ds_t));
+}
+
+void ds_set(ds_t *obj, char *s) {
+	size_t sz = strlen(s);
+	/* If theres a need for reallocation */
+	if (sz > obj->sz) {
+		obj->s = realloc(obj->s, (sz+1) * sizeof(*(obj->s)));
+	}
+	strncpy(obj->s, s, sz);
+	obj->s[sz] = '\0';
+	obj->sz = sz;
+	if (obj->s[sz - 1] == '\n') {
+		obj->s[sz - 1] = '\0';
+		obj->sz--;
+	}
+}
+
+char *ds_get_s(ds_t *obj) {
+	return obj->s;
+}
+
+size_t ds_get_sz(ds_t *obj) {
+	return obj->sz;
+}
+
+void ds_free(ds_t *obj) {
+	free(obj->s);
+}

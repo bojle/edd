@@ -16,9 +16,6 @@ static char gbl_prompt[ED_PROMPT_SIZE] = ":";
 #define ED_DEFAULT_FILENAME_SIZE 4096
 static char gbl_default_filename[ED_DEFAULT_FILENAME_SIZE];
 
-static char *ed_shell_command_buf;
-static size_t ed_shell_command_buf_sz;
-
 static _Bool gbl_saved = 0;
 
 void set_prompt(char *s) {
@@ -55,24 +52,30 @@ char *get_default_filename() {
 	return gbl_default_filename;
 }
 
+
+static ds_t *gbl_command_buf;
+
 void set_command_buf(char *cmd) {
-	if (cmd == ed_shell_command_buf) {
+	if (cmd == ds_get_s(gbl_command_buf)) {
 		return;
 	}
-
-	size_t sz = strlen(cmd);
-	if (sz > ed_shell_command_buf_sz) {
-		ed_shell_command_buf = realloc(ed_shell_command_buf, sz);
-		ed_shell_command_buf_sz = sz;
-	}
-	strncpy(ed_shell_command_buf, cmd, sz - 1);
-	ed_shell_command_buf[sz - 1] = '\0';
+	ds_set(gbl_command_buf, cmd);
 }
 
 char *get_command_buf() {
-	return ed_shell_command_buf;
+	return ds_get_s(gbl_command_buf);
 }
 
+void gbl_buffers_init() {
+	gbl_command_buf = ds_make();
+}
+
+void gbl_buffers_free() {
+	ds_free(gbl_command_buf);
+	free(gbl_command_buf);
+}
+
+/* ed_ functions begin */
 void ed_append(node_t *from, node_t *to, char *rest) {
 	from = (from == global_tail() ? ll_last_node() : from);
 	char *line = NULL;
@@ -253,8 +256,9 @@ void ed_quit(node_t *from, node_t *to, char *rest) {
 				"No write since last change." 
 				" Use 'Q' to quit without saving or save changes.\n");
 	}
+
 	ll_free();
-	free(get_command_buf());
+	gbl_buffers_free();
 	exit(EXIT_SUCCESS);
 }
 
