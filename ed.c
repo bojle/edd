@@ -75,7 +75,38 @@ void gbl_buffers_free() {
 	free(gbl_command_buf);
 }
 
-/* ed_ functions begin */
+/* Mark functions */
+
+#define FIRST_MARK '!'
+#define LAST_MARK '~'
+#define MARK_LIM (LAST_MARK - FIRST_MARK)
+node_t *gbl_marks[MARK_LIM];
+
+int set_mark(node_t *node, int at) {
+	if (at < FIRST_MARK || at > LAST_MARK) {
+		err_normal(&to_repl, "Cannot set mark to '%c'." 
+				" Marks must be one of the characters between %c and %c"
+				" in the ASCII table (see `man ascii`)\n", at, FIRST_MARK,
+				LAST_MARK);
+	}
+	int i = at - FIRST_MARK;
+	gbl_marks[i] = node;
+	return i;
+}
+
+node_t *get_mark(int at) {
+	if (at < FIRST_MARK || at > LAST_MARK) {
+		err_normal("Invalid Mark: %c", at);
+	}
+	return gbl_marks[at - FIRST_MARK];
+}
+
+void clear_mark(int at) {
+	gbl_marks[at - FIRST_MARK] = NULL;
+}
+
+
+/* ed_ functions */
 void ed_append(node_t *from, node_t *to, char *rest) {
 	from = (from == global_tail() ? ll_last_node() : from);
 	char *line = NULL;
@@ -126,7 +157,8 @@ void ed_print(node_t *from, node_t *to, char *rest) {
 void ed_print_n(node_t *from, node_t *to, char *rest) {
 	to = (to == global_tail() ? to : ll_next(to, 1));
 	from = (from == global_tail() ? ll_prev(from, 1) : from);
-	size_t n = 1;
+
+	size_t n = ll_node_index(from);
 	while (from != to) {
 		io_write_line(stdout, "%ld\t%s", n, ll_s(from));
 		from = ll_next(from, 1);
@@ -292,4 +324,9 @@ void ed_read(node_t *from, node_t *to, char *rest) {
 	while (io_read_line(&line, &linecap, fp, NULL) > 0) {
 		from = ll_add_next(from, line);
 	}
+}
+
+
+void ed_mark(node_t *from, node_t *to, char *rest) {
+	set_mark(from, *rest);
 }

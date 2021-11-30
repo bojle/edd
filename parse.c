@@ -49,7 +49,7 @@ parse_t *parse(char *exp) {
 int isaddresschar(char *a) {
 	if (*a == '-' || *a == '+' || *a == '$' ||
 		*a == '.' || *a == ',' || isdigit(*a) ||
-		(isalpha(*a) && *(a-1) == '\'') || *a == '/')
+		(isalpha(*a) && *(a-1) == '\'') || *a == '/' || *a == '\'')
 		return 1;
 	return 0;
 }
@@ -148,9 +148,10 @@ char *parse_address(parse_t *pt, char *addr) {
 				regfree(&reg);
 				break;
 			case '\'':
-				//if ((pt->from = markget(*(addr+1))) == NULL) {
-				//	io_err("Mark not set %c\n", *(addr+1));
-				//}
+				if (get_mark(*(addr+1)) == NULL) {
+					err_normal(&to_repl, "No mark set at: %c", *(addr+1));
+				}
+				pt->from = get_mark(*(addr+1));
 				break;
 			default:
 				if (isdigit(*addr)) {
@@ -227,9 +228,10 @@ void fptr_init() {
 	fp_assign('q', ed_quit);
 	fp_assign('Q', ed_quit_force);
 	fp_assign('r', ed_read);
+	fp_assign('k', ed_mark);
 }
 	
-static char *gbl_commands = "apndcmPif!eEjqQr\n";
+static char *gbl_commands = "apndcmPif!eEjqQrk\n";
 
 void eval(parse_t *pt) {
 	printf("node from: %s", ll_s(pt->from));

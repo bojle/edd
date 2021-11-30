@@ -17,6 +17,10 @@ char *get_command_buf();
 void gbl_buffers_init();
 void gbl_buffers_free();
 
+int set_mark(node_t *node, int at);
+node_t *get_mark(int at);
+void clear_mark(int at);
+
 void ed_append(node_t *from, node_t *to, char *rest);
 void ed_print(node_t *from, node_t *to, char *rest);
 void ed_print_n(node_t *from, node_t *to, char *rest);
@@ -34,5 +38,6 @@ void ed_join(node_t *from, node_t *to, char *rest);
 void ed_quit(node_t *from, node_t *to, char *rest);
 void ed_quit_force(node_t *from, node_t *to, char *rest);
 void ed_read(node_t *from, node_t *to, char *rest);
+void ed_mark(node_t *from, node_t *to, char *rest);
 
 #endif

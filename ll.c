@@ -209,3 +209,17 @@ node_t *ll_join_nodes(node_t *n1, node_t *n2) {
 	gbl_current_node = n1;
 	return n1;
 }
+
+int ll_node_index(node_t *node) {
+	if (node == global_head() || node == global_tail()) {
+		return -1;
+	}
+	node_t *i = ll_first_node();
+	int n = 1;
+	while (i != node) {
+		i = ll_next(i, 1);
+		n++;
+	}
+	return n;
+}
+
