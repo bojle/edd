@@ -8,14 +8,19 @@
 
 jmp_buf to_repl;
 
+static char *repl_line = NULL;
+
+static void free_repl_line() {
+	free(repl_line);
+}
+
 void repl() {
-	char *line = NULL;
 	size_t linecap;
+	atexit(free_repl_line);
 	setjmp(to_repl);
-	while (io_read_line(&line, &linecap, stdin, get_prompt()) > 0) {
-		eval(parse(line));
+	while (io_read_line(&repl_line, &linecap, stdin, get_prompt()) > 0) {
+		eval(parse(repl_line));
 	}
-	free(line);
 }
 
 int main(int argc, char *argv[]) {
@@ -25,11 +30,8 @@ int main(int argc, char *argv[]) {
 	}
 	ll_init();
 	fptr_init();
-	atexit(ll_free);
+
 	argv[1] = "man.txt";
 	ed_edit_force(NULL, NULL, argv[1]);
 	repl();
-
-	free(get_command_buf());
-	ll_free();
 }

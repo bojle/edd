@@ -180,3 +180,4 @@ char *strrep(char *str, regex_t *rep, char *with, _Bool matchall) {
 	free(strstart);
 	return sretn;
 }
+

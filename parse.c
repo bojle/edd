@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 #include "aux.h"
 
 
@@ -223,8 +224,11 @@ void fptr_init() {
 	fp_assign('e', ed_edit);
 	fp_assign('E', ed_edit_force);
 	fp_assign('j', ed_join);
+	fp_assign('q', ed_quit);
+	fp_assign('Q', ed_quit_force);
 }
 	
+static char *gbl_commands = "apndcmPif!eEjqQ\n";
 
 void eval(parse_t *pt) {
 	printf("node from: %s", ll_s(pt->from));
@@ -232,6 +236,10 @@ void eval(parse_t *pt) {
 	printf("command : %c\n", pt->command);
 	printf("arguments : %s\n", pt->argument);
 	printf("size: %ld\n", ll_node_size(pt->from));
+
+	if (strchr(gbl_commands, pt->command) == NULL) {
+		err_normal(&to_repl, "%s: %c\n", "Invalid Command", pt->command);
+	}
 	fptr_table[fp_hash(pt->command)](pt->from, pt->to, pt->argument);
 #if 0
 

@@ -223,7 +223,6 @@ void ed_edit(node_t *from, node_t *to, char *rest) {
 
 void ed_edit_force(node_t *from, node_t *to, char *rest) {
 	gbl_saved = 1;
-	printf("inside edit_force\n");
 	ed_edit(from, to, rest);
 }
 
@@ -248,3 +247,18 @@ void ed_join(node_t *from, node_t *to, char *rest) {
 	gbl_saved = 0;
 }
 
+void ed_quit(node_t *from, node_t *to, char *rest) {
+	if (!gbl_saved) {
+		err_normal(&to_repl, "%s", 
+				"No write since last change." 
+				" Use 'Q' to quit without saving or save changes.\n");
+	}
+	ll_free();
+	free(get_command_buf());
+	exit(EXIT_SUCCESS);
+}
+
+void ed_quit_force(node_t *from, node_t *to, char *rest) {
+	gbl_saved = 1;
+	ed_quit(from, to, rest);
+}
