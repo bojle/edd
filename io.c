@@ -63,8 +63,7 @@ void io_write_file(char *filename) {
 	fclose(fp);
 }
 
-
-FILE *fileopen(char *filename, char *mode) {
+char *parse_filename(char *filename) {
 	regex_t rt;
 	int err;
 
@@ -73,9 +72,12 @@ FILE *fileopen(char *filename, char *mode) {
 		err(&to_repl, regerror_aux(err, &rt));
 	}
 	filename = strrep(filename, &rt, get_default_filename(), 1);
+	return filename;
+}
 
-	set_default_filename(filename);
-	FILE *fp = fopen(get_default_filename(), mode);
+
+FILE *fileopen(char *filename, char *mode) {
+	FILE *fp = fopen(filename, mode);
 
 	if (fp == NULL) {
 		err(&to_repl, strerror(errno));
@@ -84,19 +86,7 @@ FILE *fileopen(char *filename, char *mode) {
 }
 
 FILE *shopen(char *cmd, char *mode) {
-	regex_t rt;
-	int err;
-
-	/* Replace all unescaped '%' in 'cmd' with the default filename */
-	if ((err = regcomp(&rt, "[^\\]%", 0)) != 0) {
-		err(&to_repl, regerror_aux(err, &rt));
-	}
-	cmd = strrep(cmd, &rt, get_default_filename(), 1);
-
 	FILE *fp = popen(cmd, mode);
-
-	set_command_buf(cmd);
-
 	if (fp == NULL) {
 		err(NULL, strerror(errno));
 	}

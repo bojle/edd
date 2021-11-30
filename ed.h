@@ -33,5 +33,6 @@ void ed_file(node_t *from, node_t *to, char *rest);
 void ed_join(node_t *from, node_t *to, char *rest);
 void ed_quit(node_t *from, node_t *to, char *rest);
 void ed_quit_force(node_t *from, node_t *to, char *rest);
+void ed_read(node_t *from, node_t *to, char *rest);
 
 #endif

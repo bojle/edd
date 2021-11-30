@@ -204,6 +204,8 @@ void ed_edit(node_t *from, node_t *to, char *rest) {
 		err_normal(&to_repl, "%s", 
 				"No write since last change. Use 'E' to override or save changes.\n");
 	}
+	rest = parse_filename(rest);
+
 	FILE *fp;
 	if (*rest == '!') {
 		rest++;
@@ -212,9 +214,11 @@ void ed_edit(node_t *from, node_t *to, char *rest) {
 			rest = get_command_buf();
 		}
 		fp = shopen(rest, "r");
+		set_command_buf(rest);
 	}
 	else {
-		fp = fileopen(rest, "r");
+		set_default_filename(rest);
+		fp = fileopen(get_default_filename(), "r");
 	}
 	node_t *node = ll_first_node();
 	while (node != global_tail()) {
@@ -265,4 +269,27 @@ void ed_quit(node_t *from, node_t *to, char *rest) {
 void ed_quit_force(node_t *from, node_t *to, char *rest) {
 	gbl_saved = 1;
 	ed_quit(from, to, rest);
+}
+
+void ed_read(node_t *from, node_t *to, char *rest) {
+	FILE *fp;
+	if (*rest == '!') {
+		rest++;
+		rest = skipspaces(rest);
+		fp = shopen(rest, "r");
+	}
+	else {
+		size_t sz = strlen(rest);
+		if (rest[sz - 1] == '\n') {
+			rest[sz - 1] = '\0';
+		}
+		fp = fileopen(rest, "r");
+	}
+
+	char *line = NULL;
+	size_t linecap;
+
+	while (io_read_line(&line, &linecap, fp, NULL) > 0) {
+		from = ll_add_next(from, line);
+	}
 }

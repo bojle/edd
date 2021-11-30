@@ -4,6 +4,7 @@
 /* fopen() wrapper */
 FILE *fileopen(char *filename, char *mode);
 FILE *shopen(char *cmd, char *mode);
+char *parse_filename(char *filename);
 
 /* Load 'fp' in the global list */
 void io_load_file(FILE *fp);

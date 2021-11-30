@@ -226,9 +226,10 @@ void fptr_init() {
 	fp_assign('j', ed_join);
 	fp_assign('q', ed_quit);
 	fp_assign('Q', ed_quit_force);
+	fp_assign('r', ed_read);
 }
 	
-static char *gbl_commands = "apndcmPif!eEjqQ\n";
+static char *gbl_commands = "apndcmPif!eEjqQr\n";
 
 void eval(parse_t *pt) {
 	printf("node from: %s", ll_s(pt->from));
