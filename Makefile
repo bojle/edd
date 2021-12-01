@@ -1,5 +1,5 @@
 cc=gcc
-flags=-Wall -pedantic -Wextra -g
+flags=-Wall -pedantic -Wextra -g -Wno-unused-parameter
 ldlibs=
 exe=d
 objects= main.o ll.o parse.o io.o ed.o err.o aux.o

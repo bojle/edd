@@ -446,3 +446,23 @@ void ed_comment(node_t *from, node_t *to, char *rest) {
 void ed_semicolon(node_t *from, node_t *to, char *rest) {
 	ll_set_current_node(from);
 }
+
+void ed_transfer(node_t *from, node_t *to, char *rest) {
+	from = (from == global_head() ? ll_first_node() : from);
+	to = (to == global_tail() ? ll_last_node() : ll_next(to, 1));
+
+	parse_t *pt = pt_make();
+	parse_address(pt, rest);
+	node_t *move_to = pt_from(pt);
+	free(pt);
+
+	move_to = (move_to == global_tail() ? ll_last_node(): move_to);
+	//node_t *move_to_subsequent = ll_next(move_to, 1);
+
+	while (from != to) {
+		move_to = ll_add_next(move_to, ll_s(from));
+		from = ll_next(from, 1);
+	}
+
+	gbl_saved = 0;
+}

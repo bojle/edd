@@ -238,9 +238,10 @@ void fptr_init() {
 	fp_assign('=', ed_equals);
 	fp_assign('#', ed_comment);
 	fp_assign(';', ed_semicolon);
+	fp_assign('t', ed_transfer);
 }
 	
-static char *gbl_commands = "apndcmPif!eEjqQrkwW=#;\n";
+static char *gbl_commands = "apndcmPif!eEjqQrkwW=#;t\n";
 
 void eval(parse_t *pt) {
 	printf("node from: %s", ll_s(pt->from));
