@@ -189,7 +189,10 @@ typedef struct ds_t{
 } ds_t;
 
 ds_t *ds_make() {
-	return calloc(1, sizeof(ds_t));
+	ds_t *ds = calloc(1, sizeof(ds_t));
+	ds->s = NULL;
+	ds->sz = 0;
+	return ds;
 }
 
 void ds_set(ds_t *obj, char *s) {
@@ -201,10 +204,6 @@ void ds_set(ds_t *obj, char *s) {
 	strncpy(obj->s, s, sz);
 	obj->s[sz] = '\0';
 	obj->sz = sz;
-	if (obj->s[sz - 1] == '\n') {
-		obj->s[sz - 1] = '\0';
-		obj->sz--;
-	}
 }
 
 char *ds_get_s(ds_t *obj) {
@@ -217,4 +216,60 @@ size_t ds_get_sz(ds_t *obj) {
 
 void ds_free(ds_t *obj) {
 	free(obj->s);
+}
+
+/* Yank buf */
+
+typedef struct yb_t {
+	ds_t **yb;
+	size_t sz;
+	size_t nmemb;
+	size_t initialized;
+} yb_t;
+
+/*
+ * yb_t *obj;
+ * obj->yb[n] points to the nth dynamic string
+ */
+
+void yb_append(yb_t *yb, char *s) {
+	size_t sz = (yb->sz == 0 ? 1 : yb->sz);
+	if (yb->sz == yb->nmemb) {
+		yb->yb = realloc(yb->yb, (sz * 2) * sizeof(*(yb->yb)));
+		yb->sz = sz * 2;
+	}
+	if (yb->nmemb >= yb->initialized) {
+		yb->yb[yb->nmemb] = ds_make();
+		yb->initialized++;
+	}
+	ds_set(yb->yb[yb->nmemb], s);
+	yb->nmemb++;
+}
+
+char *yb_at(yb_t *yb, int i) {
+	return ds_get_s(yb->yb[i]);
+}
+
+yb_t *yb_make() {
+	yb_t *yb = calloc(1, sizeof(*yb));
+	yb->yb = NULL;
+	yb->sz = 0;
+	yb->nmemb = 0;
+	yb->initialized = 0;
+	return yb;
+}
+
+void yb_free(yb_t *yb) {
+	for (size_t i = 0; i < yb->nmemb; --i)	{
+		ds_free(yb->yb[i]);
+	}
+	free(yb->yb);
+}
+
+void yb_clear(yb_t *yb) {
+	yb->nmemb = 0;
+}
+
+size_t yb_nmembs(yb_t *yb) {
+	return yb->nmemb;
 }

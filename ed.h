@@ -45,5 +45,7 @@ void ed_comment(node_t *from, node_t *to, char *rest);
 void ed_semicolon(node_t *from, node_t *to, char *rest);
 void ed_write_append(node_t *from, node_t *to, char *rest);
 void ed_transfer(node_t *from, node_t *to, char *rest);
+void ed_yank(node_t *from, node_t *to, char *rest);
+void ed_paste(node_t *from, node_t *to, char *rest);
 
 #endif

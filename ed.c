@@ -58,6 +58,8 @@ char *get_default_filename() {
 
 static ds_t *gbl_command_buf;
 
+static yb_t *gbl_yank_buf;
+
 void set_command_buf(char *cmd) {
 	if (cmd == ds_get_s(gbl_command_buf)) {
 		return;
@@ -71,11 +73,27 @@ char *get_command_buf() {
 
 void gbl_buffers_init() {
 	gbl_command_buf = ds_make();
+	gbl_yank_buf = yb_make();
 }
 
 void gbl_buffers_free() {
 	ds_free(gbl_command_buf);
 	free(gbl_command_buf);
+	yb_free(gbl_yank_buf);
+	free(gbl_yank_buf);
+}
+
+/* Yank Buffer Functions */
+void yank_buf_push(char *s) {
+	yb_append(gbl_yank_buf, s);
+}
+
+char *yank_buf_get(int at) {
+	return yb_at(gbl_yank_buf, at);
+}
+
+void yank_buf_clear() {
+	yb_clear(gbl_yank_buf);
 }
 
 /* Mark functions */
@@ -465,4 +483,22 @@ void ed_transfer(node_t *from, node_t *to, char *rest) {
 	}
 
 	gbl_saved = 0;
+}
+
+void ed_yank(node_t *from, node_t *to, char *rest) {
+	from = (from == global_head() ? ll_first_node() : from);
+	to = (to == global_tail() ? ll_last_node() : ll_next(to, 1));
+
+	yank_buf_clear();
+	while (from != to) {
+		yank_buf_push(ll_s(from));
+		from = ll_next(from, 1);
+	}
+}
+
+
+void ed_paste(node_t *from, node_t *to, char *rest) {
+	for (int i = 0; i < yb_nmembs(gbl_yank_buf); ++i) {
+		from = ll_add_next(from, yank_buf_get(i));
+	}
 }

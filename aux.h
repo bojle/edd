@@ -27,4 +27,11 @@ char *ds_get_s(ds_t *obj);
 size_t ds_get_sz(ds_t *obj);
 void ds_free(ds_t *obj);
 
+typedef struct yb_t yb_t;
+void yb_append(yb_t *yb, char *s);
+char *yb_at(yb_t *yb, int i);
+yb_t *yb_make();
+void yb_free(yb_t *yb);
+void yb_clear(yb_t *yb);
+size_t yb_nmembs(yb_t *yb);
 #endif
