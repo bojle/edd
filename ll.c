@@ -163,8 +163,8 @@ void ll_free() {
 	if (gbl_len <= 0) {
 		goto end;
 	}
-	node_t *node = gbl_head_node;
-	while ((node = ll_next(node, 1)) != gbl_tail_node) {
+	node_t *node = ll_first_node();
+	while (node != global_tail()) {
 		node = ll_remove_node(node);
 	}
 end:

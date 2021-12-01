@@ -395,6 +395,43 @@ void ed_write(node_t *from, node_t *to, char *rest) {
 	}
 }
 
+void ed_write_append(node_t *from, node_t *to, char *rest) {
+	FILE *fp;
+	_Bool quit = 0;
+	_Bool frompipe = 0;
+	if (*rest == 'q') {
+		quit = 1;
+		rest = skipspaces(++rest);
+	}
+	if (!isalnum(*rest))  {
+		if (get_default_filename() == NULL) {
+			err_normal(&to_repl, "No default filename set. "
+				"Set a default filename or provide a file in the command\n");
+		}
+		rest = get_default_filename();
+	}
+	if (get_default_filename() == NULL) {
+		set_default_filename(rest);
+	}
+	fp = fileopen(rest, "a");
+	if (parse_defaults) {
+		from = ll_first_node();
+		to = ll_last_node();
+	}
+
+	to = (to == global_tail() ? to : ll_next(to, 1));
+	while (from != to) {
+		fprintf(fp, "%s", ll_s(from));
+		from = ll_next(from, 1);
+	}
+	gbl_saved = 1;
+	frompipe == 1 ? pclose(fp) : fclose(fp);
+	if (quit) {
+		ed_quit(NULL, NULL, NULL);
+	}
+	
+}
+
 void ed_equals(node_t *from, node_t *to, char *rest) {
 	if (parse_defaults) {
 		from = ll_last_node();

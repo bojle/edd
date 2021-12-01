@@ -43,5 +43,6 @@ void ed_write(node_t *from, node_t *to, char *rest);
 void ed_equals(node_t *from, node_t *to, char *rest);
 void ed_comment(node_t *from, node_t *to, char *rest);
 void ed_semicolon(node_t *from, node_t *to, char *rest);
+void ed_write_append(node_t *from, node_t *to, char *rest);
 
 #endif
