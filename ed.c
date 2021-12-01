@@ -381,3 +381,8 @@ void ed_write(node_t *from, node_t *to, char *rest) {
 		ed_quit(NULL, NULL, NULL);
 	}
 }
+
+void ed_equals(node_t *from, node_t *to, char *rest) {
+	from = (from == global_tail() ? ll_last_node() : from);
+	io_write_line(stdout, "%d\n", ll_node_index(from));
+}

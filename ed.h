@@ -40,5 +40,6 @@ void ed_quit_force(node_t *from, node_t *to, char *rest);
 void ed_read(node_t *from, node_t *to, char *rest);
 void ed_mark(node_t *from, node_t *to, char *rest);
 void ed_write(node_t *from, node_t *to, char *rest);
+void ed_equals(node_t *from, node_t *to, char *rest);
 
 #endif
