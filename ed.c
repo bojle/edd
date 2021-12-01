@@ -149,8 +149,14 @@ void ed_insert(node_t *from, node_t *to, char *rest) {
 }
 
 void ed_print(node_t *from, node_t *to, char *rest) {
+	if (parse_defaults) {
+		io_write_line(stdout, "%s", ll_s(global_current()));
+		return;
+	}
+
 	to = (to == global_tail() ? to : ll_next(to, 1));
 	from = (from == global_tail() ? ll_prev(from, 1) : from);
+
 	while (from != to) {
 		io_write_line(stdout, "%s", ll_s(from));
 		from = ll_next(from, 1);
@@ -158,6 +164,10 @@ void ed_print(node_t *from, node_t *to, char *rest) {
 }
 
 void ed_print_n(node_t *from, node_t *to, char *rest) {
+	if (parse_defaults) {
+		io_write_line(stdout, "%s", ll_s(global_current()));
+		return;
+	}
 	to = (to == global_tail() ? to : ll_next(to, 1));
 	from = (from == global_tail() ? ll_prev(from, 1) : from);
 
@@ -209,6 +219,9 @@ void ed_move(node_t *from, node_t *to, char *rest) {
 }
 
 void ed_newline(node_t *from, node_t *to, char *rest) {
+	if (parse_defaults) {
+		ll_set_current_node(from = ll_next(from, 1));
+	}
 	from = (from == global_tail() ? ll_last_node() : from);
 	ed_print(from, from, rest);
 }
@@ -383,6 +396,9 @@ void ed_write(node_t *from, node_t *to, char *rest) {
 }
 
 void ed_equals(node_t *from, node_t *to, char *rest) {
+	if (parse_defaults) {
+		from = ll_last_node();
+	}
 	from = (from == global_tail() ? ll_last_node() : from);
 	io_write_line(stdout, "%d\n", ll_node_index(from));
 }

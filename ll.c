@@ -91,6 +91,9 @@ node_t *ll_remove_node(node_t *node) {
 }	
 	
 node_t *ll_next(node_t *node, int offset) {
+	if (offset == 1) {
+		return node->next;
+	}
 	while (node != global_tail() && offset > 0) {
 		node = node->next;
 		offset--;
@@ -100,6 +103,9 @@ node_t *ll_next(node_t *node, int offset) {
 }
 
 node_t *ll_prev(node_t *node, int offset) {
+	if (offset == 1) {
+		return node->prev;
+	}
 	while (node != global_head() && offset > 0) {
 		node = node->prev;
 		offset--;
@@ -223,3 +229,10 @@ int ll_node_index(node_t *node) {
 	return n;
 }
 
+void ll_set_current_node(node_t *node) {
+	if (node == global_tail()) {
+		gbl_current_node = ll_last_node();
+		return;
+	}
+	gbl_current_node = node;
+}
