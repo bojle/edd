@@ -402,3 +402,10 @@ void ed_equals(node_t *from, node_t *to, char *rest) {
 	from = (from == global_tail() ? ll_last_node() : from);
 	io_write_line(stdout, "%d\n", ll_node_index(from));
 }
+
+void ed_comment(node_t *from, node_t *to, char *rest) {
+}
+
+void ed_semicolon(node_t *from, node_t *to, char *rest) {
+	ll_set_current_node(from);
+}
