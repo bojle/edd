@@ -29,6 +29,13 @@ char *skipspaces(char *s);
 node_t *pt_from(parse_t *pt);
 parse_t *pt_make();
 
+/* 
+ * Lets functions know that the values of 
+ * parse memebers are default values i.e.
+ * were not modified by parse functions
+ */
+extern _Bool parse_defaults; 
+
 /* eval */
 void eval(parse_t *pt);
 void fptr_init();

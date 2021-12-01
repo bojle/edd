@@ -215,7 +215,7 @@ int ll_node_index(node_t *node) {
 		return -1;
 	}
 	node_t *i = ll_first_node();
-	int n = 1;
+	int n = ED_INDEXING;
 	while (i != node) {
 		i = ll_next(i, 1);
 		n++;

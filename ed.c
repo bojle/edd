@@ -49,6 +49,9 @@ void set_default_filename(char *s) {
 }
 
 char *get_default_filename() {
+	if (gbl_default_filename[0] == '\0') {
+		return NULL;
+	}
 	return gbl_default_filename;
 }
 
@@ -96,7 +99,7 @@ int set_mark(node_t *node, int at) {
 
 node_t *get_mark(int at) {
 	if (at < FIRST_MARK || at > LAST_MARK) {
-		err_normal("Invalid Mark: %c", at);
+		err_normal(&to_repl, "Invalid Mark: %c", at);
 	}
 	return gbl_marks[at - FIRST_MARK];
 }
@@ -219,6 +222,7 @@ void ed_shell(node_t *from, node_t *to, char *rest) {
 		rest = get_command_buf();
 	}
 	FILE *fp = shopen(rest, "r");
+	set_command_buf(rest);
 	io_write_line(stdout, "%s\n", get_command_buf());
 
 	char *line = NULL;
@@ -239,6 +243,7 @@ void ed_edit(node_t *from, node_t *to, char *rest) {
 	rest = parse_filename(rest);
 
 	FILE *fp;
+	_Bool frompipe = 0;
 	if (*rest == '!') {
 		rest++;
 		rest = skipspaces(rest);
@@ -247,6 +252,7 @@ void ed_edit(node_t *from, node_t *to, char *rest) {
 		}
 		fp = shopen(rest, "r");
 		set_command_buf(rest);
+		frompipe = 1;
 	}
 	else {
 		set_default_filename(rest);
@@ -257,6 +263,7 @@ void ed_edit(node_t *from, node_t *to, char *rest) {
 		node = ll_remove_node(node);
 	}
 	io_load_file(fp);
+	frompipe == 1 ? pclose(fp) : fclose(fp);
 	gbl_saved = 1;
 }
 
@@ -305,16 +312,14 @@ void ed_quit_force(node_t *from, node_t *to, char *rest) {
 
 void ed_read(node_t *from, node_t *to, char *rest) {
 	FILE *fp;
+	_Bool frompipe = 0;
 	if (*rest == '!') {
 		rest++;
 		rest = skipspaces(rest);
 		fp = shopen(rest, "r");
+		frompipe = 1;
 	}
 	else {
-		size_t sz = strlen(rest);
-		if (rest[sz - 1] == '\n') {
-			rest[sz - 1] = '\0';
-		}
 		fp = fileopen(rest, "r");
 	}
 
@@ -324,9 +329,55 @@ void ed_read(node_t *from, node_t *to, char *rest) {
 	while (io_read_line(&line, &linecap, fp, NULL) > 0) {
 		from = ll_add_next(from, line);
 	}
+	free(line);
+	frompipe == 1 ? pclose(fp) : fclose(fp);
 }
 
 
 void ed_mark(node_t *from, node_t *to, char *rest) {
 	set_mark(from, *rest);
+}
+
+void ed_write(node_t *from, node_t *to, char *rest) {
+	FILE *fp;
+	_Bool quit = 0;
+	_Bool frompipe = 0;
+	if (*rest == '!') {
+		fp = shopen(skipspaces(++rest), "w");
+		frompipe = 1;
+	}
+	else { 
+		if (*rest == 'q') {
+			quit = 1;
+			rest = skipspaces(++rest);
+		}
+		if (!isalnum(*rest))  {
+			if (get_default_filename() == NULL) {
+				err_normal(&to_repl, "No default filename set. "
+					"Set a default filename or provide a file in the command\n");
+			}
+			rest = get_default_filename();
+		}
+		if (get_default_filename() == NULL) {
+			set_default_filename(rest);
+		}
+		fp = fileopen(rest, "w");
+	}
+	
+
+	if (parse_defaults) {
+		from = ll_first_node();
+		to = ll_last_node();
+	}
+
+	to = (to == global_tail() ? to : ll_next(to, 1));
+	while (from != to) {
+		fprintf(fp, "%s", ll_s(from));
+		from = ll_next(from, 1);
+	}
+	gbl_saved = 1;
+	frompipe == 1 ? pclose(fp) : fclose(fp);
+	if (quit) {
+		ed_quit(NULL, NULL, NULL);
+	}
 }

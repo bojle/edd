@@ -32,12 +32,15 @@ struct parse_t {
 
 static parse_t pt;
 
+_Bool parse_defaults = 0;
+
 parse_t *parse(char *exp) {
 	/* defaults */
 	pt.from = global_current();
 	pt.to = ll_last_node();
 	pt.command = '\0';
 	pt.argument = NULL;
+	parse_defaults = 1;
 
 	exp = parse_address(&pt, exp);
 	exp = skipspaces(exp);
@@ -74,6 +77,7 @@ char *parse_address(parse_t *pt, char *addr) {
 	for (; isaddresschar(addr); addr++) {
 		long num = 1;
 		char *start = NULL;
+		parse_defaults = 0;
 		switch (*addr) {
 			case '.':
 				if (commapassed) { 
@@ -229,9 +233,10 @@ void fptr_init() {
 	fp_assign('Q', ed_quit_force);
 	fp_assign('r', ed_read);
 	fp_assign('k', ed_mark);
+	fp_assign('w', ed_write);
 }
 	
-static char *gbl_commands = "apndcmPif!eEjqQrk\n";
+static char *gbl_commands = "apndcmPif!eEjqQrkw\n";
 
 void eval(parse_t *pt) {
 	printf("node from: %s", ll_s(pt->from));

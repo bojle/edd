@@ -38,8 +38,6 @@ int io_write_line(FILE *fp, const char *fmt, ...) {
 
 
 void io_load_file(FILE *fp) {
-	//FILE *fp = fileopen(filename, "r");
-
 	char *line = NULL;
 	size_t linecap;
 	node_t *node = global_head();
@@ -47,7 +45,6 @@ void io_load_file(FILE *fp) {
 		node = ll_add_next(node, line);
 	}
 	free(line);
-	fclose(fp);
 }
 
 void io_write_file(char *filename) {
@@ -77,15 +74,23 @@ char *parse_filename(char *filename) {
 
 
 FILE *fileopen(char *filename, char *mode) {
+	size_t sz = strlen(filename);
+	if (filename[sz - 1] == '\n') {
+		filename[sz - 1] = '\0';
+	}
 	FILE *fp = fopen(filename, mode);
 
 	if (fp == NULL) {
-		err(&to_repl, strerror(errno));
+		err_normal(&to_repl, "%s: %s\n", strerror(errno), filename);
 	}
 	return fp;
 }
 
 FILE *shopen(char *cmd, char *mode) {
+	size_t sz = strlen(cmd);
+	if (cmd[sz - 1] == '\n') {
+		cmd[sz - 1] = '\0';
+	}
 	FILE *fp = popen(cmd, mode);
 	if (fp == NULL) {
 		err(NULL, strerror(errno));
