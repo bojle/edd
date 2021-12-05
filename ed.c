@@ -502,3 +502,7 @@ void ed_paste(node_t *from, node_t *to, char *rest) {
 		from = ll_add_next(from, yank_buf_get(i));
 	}
 }
+
+void ed_subs(node_t *from, node_t *to, char *rest) {
+}
+

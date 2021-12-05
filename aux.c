@@ -186,24 +186,30 @@ char *strrep(char *str, regex_t *rep, char *with, _Bool matchall) {
 typedef struct ds_t{
 	char *s;
 	size_t sz;
+	int nmemb;
 } ds_t;
 
 ds_t *ds_make() {
-	ds_t *ds = calloc(1, sizeof(ds_t));
+	ds_t *ds = calloc(1, sizeof(*ds));
 	ds->s = NULL;
 	ds->sz = 0;
+	ds->nmemb = 0;
 	return ds;
 }
 
 void ds_set(ds_t *obj, char *s) {
 	size_t sz = strlen(s);
-	/* If theres a need for reallocation */
 	if (sz > obj->sz) {
 		obj->s = realloc(obj->s, (sz+1) * sizeof(*(obj->s)));
 	}
 	strncpy(obj->s, s, sz);
 	obj->s[sz] = '\0';
 	obj->sz = sz;
+	if (obj->s[sz - 1] == '\n') {
+		obj->s[sz - 1] = '\0';
+		obj->sz--;
+	}
+	obj->nmemb = obj->sz;
 }
 
 char *ds_get_s(ds_t *obj) {
@@ -214,8 +220,39 @@ size_t ds_get_sz(ds_t *obj) {
 	return obj->sz;
 }
 
+char ds_at(ds_t *obj, int n) {
+	return obj->s[n];
+}
+
+
 void ds_free(ds_t *obj) {
 	free(obj->s);
+}
+
+void ds_append(ds_t *ds, char c) {
+	size_t sz = (ds->sz == 0 ? 1 : ds->sz);
+	if (ds->nmemb >= ds->sz) {
+		ds->s = realloc(ds->s, (sz * 2) * sizeof(*(ds->s)));
+		ds->sz = sz * 2;
+	}
+	ds->s[ds->nmemb] = c;
+	ds->nmemb++;
+	ds->s[ds->nmemb] = '\0';
+}
+
+void ds_clear(ds_t *ds) {
+	if (ds->nmemb == 0) {
+		return;
+	}
+	ds->s[0] = '\0';
+	ds->nmemb = 0;
+}
+
+void ds_cat_e(ds_t *ds, char *sp, char *ep) {
+	while (sp <= ep) {
+		ds_append(ds, *sp);
+		sp++;
+	}
 }
 
 /* Yank buf */
