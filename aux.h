@@ -34,4 +34,18 @@ yb_t *yb_make();
 void yb_free(yb_t *yb);
 void yb_clear(yb_t *yb);
 size_t yb_nmembs(yb_t *yb);
+
+
+typedef struct re_t re_t;
+re_t *re_make();
+void re_free(re_t *re);
+ds_t *re_get_subst(re_t *re);
+
+char *next_unescaped_delimiter(char *exp, char delimiter);
+char *re_replace(re_t *re, char *line, char *subst);
+char *next_unescaped_delimiter(char *exp, char delimiter);
+void parse_tail(re_t *re, char *tail);
+void parse_subst(re_t *re, char *line, char *exp);
+void parse_regex(re_t *re, char *exp);
+char *strsubs(re_t *re, char *line, char *exp);
 #endif

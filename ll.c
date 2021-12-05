@@ -236,3 +236,10 @@ void ll_set_current_node(node_t *node) {
 	}
 	gbl_current_node = node;
 }
+
+void ll_set_s(node_t *n, char *s) {
+	if (s == NULL) {
+		return;
+	}
+	n->s = s;
+}

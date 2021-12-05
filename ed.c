@@ -60,6 +60,8 @@ static ds_t *gbl_command_buf;
 
 static yb_t *gbl_yank_buf;
 
+static re_t *gbl_re;
+
 void set_command_buf(char *cmd) {
 	if (cmd == ds_get_s(gbl_command_buf)) {
 		return;
@@ -74,13 +76,18 @@ char *get_command_buf() {
 void gbl_buffers_init() {
 	gbl_command_buf = ds_make();
 	gbl_yank_buf = yb_make();
+	gbl_re = re_make();
 }
 
 void gbl_buffers_free() {
 	ds_free(gbl_command_buf);
 	free(gbl_command_buf);
+
 	yb_free(gbl_yank_buf);
 	free(gbl_yank_buf);
+
+	re_free(gbl_re);
+	free(gbl_re);
 }
 
 /* Yank Buffer Functions */
@@ -498,11 +505,49 @@ void ed_yank(node_t *from, node_t *to, char *rest) {
 
 
 void ed_paste(node_t *from, node_t *to, char *rest) {
-	for (int i = 0; i < yb_nmembs(gbl_yank_buf); ++i) {
+	for (int i = 0; i < (int)yb_nmembs(gbl_yank_buf); ++i) {
 		from = ll_add_next(from, yank_buf_get(i));
 	}
 }
 
-void ed_subs(node_t *from, node_t *to, char *rest) {
-}
+/*
+ * rest should be of the form: 		
+ * 		[delimiter][RE][delimiter][SUBS][delimiter][TAIL]
+ * 								OR
+ *      A count suffix N or any permutation of characters r,g,p.
+ *
+ * 		Replace from->s to a calloc'ated string with all characters 
+ * 		that match [RE], replaced with [SUBS].
+ *
+ * 		See manual for more.
+ *
+ * re_replace() or any other function in the chain shall not deallocate anything,
+ * deallocation is relegated to the user of this function.
+ */
 
+void ed_subs(node_t *from, node_t *to, char *rest) {
+	from = (from == global_head() ? ll_first_node() : from);
+	to = (to == global_tail() ? to : ll_next(to, 1));
+
+	char *subst;
+	char *tail;
+	if (isdigit(*rest) || *rest == 'r' || *rest == 'g' || *rest == 'p') {
+		subst = ds_get_s(re_get_subst(gbl_re));
+		tail = rest;
+		goto end;
+	}
+
+	char delimiter = *rest++;
+	char *regex = rest;
+	subst = next_unescaped_delimiter(regex, delimiter);
+	tail = next_unescaped_delimiter(subst, delimiter);
+
+	parse_regex(gbl_re, regex);
+end:
+	parse_tail(gbl_re, tail);
+
+	while (from != to) {
+		ll_set_s(from, re_replace(gbl_re, ll_s(from), subst));
+		from = ll_next(from, 1);
+	}
+}

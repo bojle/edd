@@ -71,4 +71,6 @@ node_t *ll_last_node();
 node_t *ll_join_nodes(node_t *n1, node_t *n2);
 int ll_node_index(node_t *node);
 void ll_set_current_node(node_t *node);
+
+void ll_set_s(node_t *n, char *s);
 #endif

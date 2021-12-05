@@ -2,6 +2,9 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include "err.h"
+#include "io.h"
 
 #define REPLIM 200
 
@@ -231,7 +234,7 @@ void ds_free(ds_t *obj) {
 
 void ds_append(ds_t *ds, char c) {
 	size_t sz = (ds->sz == 0 ? 1 : ds->sz);
-	if (ds->nmemb >= ds->sz) {
+	if (ds->nmemb >= (int)ds->sz) {
 		ds->s = realloc(ds->s, (sz * 2) * sizeof(*(ds->s)));
 		ds->sz = sz * 2;
 	}
@@ -309,4 +312,167 @@ void yb_clear(yb_t *yb) {
 
 size_t yb_nmembs(yb_t *yb) {
 	return yb->nmemb;
+}
+
+
+/* Regex Functions */
+
+typedef struct re_t{
+	regex_t re;
+	ds_t *subst;
+	_Bool global;
+	_Bool print;
+	_Bool number;
+	int N;
+} re_t;
+
+re_t *re_make() {
+	re_t *re = calloc(1, sizeof(*re));
+	re->global = 0;
+	re->print = 0;
+	re->number = 0;
+	re->N = 0;
+	return re;
+}
+
+void re_free(re_t *re) {
+	if (re->subst != NULL) {
+		ds_free(re->subst);
+	}
+}
+
+ds_t *re_get_subst(re_t *re) {
+	return re->subst;
+}
+
+#define toggle(a) (a = (a == 1 ? 0 : 1))
+
+
+#define NMATCH 200
+regmatch_t pmatch[NMATCH];
+
+void parse_regex(re_t *re, char *exp) {
+	int err;
+	if ((err = regcomp(&re->re, exp, REG_EXTENDED)) != 0) {
+		err_normal(&to_repl, "%s\n", regerror_aux(err, &re->re));
+	}
+}
+
+void parse_subst(re_t *re, char *line, char *exp) {
+
+	int err;
+	if ((err = regexec(&re->re, line, NMATCH, pmatch, 0)) != 0) { 
+		pmatch[0].rm_so = -1;
+		pmatch[0].rm_eo = -1;
+	}
+
+	if (re->subst == NULL) {
+		re->subst = ds_make();
+	}
+
+	ds_clear(re->subst);
+	while (*exp) {
+		if (*exp == '&' && *(exp-1) != '\\') {
+			ds_cat_e(re->subst, line + pmatch[0].rm_so, line + pmatch[0].rm_eo - 1);
+		}
+		else if (isdigit(*exp) && *(exp-1) == '\\') {
+			ds_cat_e(re->subst, line + pmatch[*exp - '0'].rm_so, line + pmatch[*exp - '0'].rm_eo -1);
+		}
+		else if (*exp == '\\') {
+		}
+		else {
+			ds_append(re->subst, *exp);
+		}
+		exp++;
+	}
+}
+
+void parse_tail(re_t *re, char *tail) {
+	/* N, r, p, g */
+	for (; *tail; tail++) {
+		if (isdigit(*tail)) {
+			re->N = strtol(tail, &tail, 10);
+			tail--;
+			re->number = 1;
+		}
+		else {
+			switch (*tail) {
+				case 'r':
+					// TODO
+					break;
+				case 'p':
+					toggle(re->print);
+					break;
+				case 'g':
+					toggle(re->global);
+					break;
+				default:
+					re->number = 0;
+					break;
+			}
+		}
+	}
+}
+
+char *next_unescaped_delimiter(char *exp, char delimiter) {
+	++exp;
+	for (; ; ++exp) {
+		if (*exp == delimiter && *(exp -1) != '\\') {
+			break;
+		}
+	}
+	*exp++ = '\0';
+	return exp;	
+}
+
+char *re_replace(re_t *re, char *line, char *subst) {
+	ds_t ds;
+	ds.s = NULL;
+	ds.sz = 0;
+	ds.nmemb = 0;
+
+	_Bool number = re->number;
+	int num = re->N;
+	// line is a line is a line
+	
+	parse_subst(re, line, subst);
+	if (number) {
+		num--;
+	}
+	char *i = line;
+	while (*i) {
+		if (i == line + pmatch[0].rm_so) {
+			if (number && num > 0) {
+				ds_cat_e(&ds, line + pmatch[0].rm_so, line + pmatch[0].rm_eo - 1);
+				i = line + pmatch[0].rm_eo;
+				line = i;
+				parse_subst(re, i, subst);
+				num--;
+			}
+			else {
+				char *s = ds_get_s(re->subst);
+				int sz = re->subst->nmemb;
+				ds_cat_e(&ds, s, s + sz -1);
+				i = line + pmatch[0].rm_eo;
+				line = i;
+				if (re->global) {
+					parse_subst(re, i, subst);
+				}
+				if (number && num <= 0) {
+					line += strlen(i);
+				}
+			}
+		}
+		else if (*i == '\\') {
+			++i;
+		}
+		else {
+			ds_append(&ds, *i);
+			i++;
+		}
+	}
+	if (re->print) {
+		io_write_line(stdout, "%s", ds.s);
+	}
+	return ds.s;
 }
