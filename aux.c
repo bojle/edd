@@ -6,6 +6,7 @@
 #include "err.h"
 #include "io.h"
 #include "ll.h"
+#include "parse.h"
 
 #define REPLIM 200
 
@@ -41,10 +42,12 @@ void ds_set(ds_t *obj, char *s) {
 	strncpy(obj->s, s, sz);
 	obj->s[sz] = '\0';
 	obj->sz = sz;
+#if 0
 	if (obj->s[sz - 1] == '\n') {
 		obj->s[sz - 1] = '\0';
 		obj->sz--;
 	}
+#endif
 	obj->nmemb = obj->sz;
 }
 
@@ -358,9 +361,13 @@ void read_command_list(yb_t *yb, char *cmd) {
 		cmd[len - 1] = '\0';
 	}
 	yb_append(yb, cmd);
+	if (cmd[len-1] == '\n' && cmd[len - 2] != '\\') {
+		return;
+	}
+
 	while (1) {
 		if ((len = io_read_line(&line, &linecap, stdin, NULL)) <= 0) {
-			err_normal(&to_repl, "%s", "No characters in the input stream");
+			err_normal(&to_repl, "%s\n", "No characters in the input stream");
 		}
 		if (line[len - 2] == '\\') {
 			line[len - 2] = '\n';
@@ -374,18 +381,42 @@ void read_command_list(yb_t *yb, char *cmd) {
 	free(line);
 }
 
-void execute_command_list(yb_t *yb) {
+void execute_command_list(yb_t *yb, node_t *from) {
 	char current_cmd;
+	char *cmd;
+
 	for (int i = 0; i < (int)yb->nmemb; ++i) {
-		if (*cmd == 'a' || *cmd == 'i') {
-			current_cmd = *cmd;
+		cmd = yb_at(yb, i);
+		current_cmd = *cmd;
+		if (*cmd == 'a' || *cmd == 'i' || *cmd == 'c') {
 			cmd = skipspaces(++cmd);
-			if (*cmd != '\\') {
+			if (isalnum(*cmd)) {
 				err_normal(&to_repl, "%s\n", "Invalid command suffix");
 			}
 			else {
-				
+				if (current_cmd == 'i') {
+					from = ll_prev(from, 1);
+				}
+				else if (current_cmd == 'c') {
+					from = ll_remove_node(from);
+					from = ll_prev(from, 1);
+				}
+
+				for (i += 1; yb_at(yb, i)[0] != '.' && i < (int)yb->nmemb; ++i) {
+					ll_add_next(from, yb_at(yb, i));
+					from = ll_next(from, 1);
+				}
 			}
+		}
+		else if (strchr(gbl_commands, *cmd) != NULL) {
+			parse_t *pt = pt_make();
+			cmd++;
+			pt_set(pt, from, from, current_cmd, skipspaces(cmd));
+			eval(pt);
+			free(pt);
+		}
+		else {
+			err_normal(&to_repl, "%s\n", "Invalid Command");
 		}
 	}
 }

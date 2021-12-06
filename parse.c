@@ -190,9 +190,20 @@ node_t *pt_from(parse_t *pt) {
 }
 
 parse_t *pt_make() {
-	return calloc(1, sizeof(parse_t));
+	parse_t *pt = calloc(1, sizeof(*pt));
+	pt->from = NULL;
+	pt->to = NULL;
+	pt->command = '\0';
+	pt->argument = NULL;
+	return pt;
 }
 
+void pt_set(parse_t *pt, node_t *from, node_t *to, char cmd, char *rest) {
+	pt->from = from;
+	pt->to = to;
+	pt->command = cmd;
+	pt->argument = rest;
+}
 
 /* 
  * Function pointer type for functions of of this prototype:
@@ -245,7 +256,7 @@ void fptr_init() {
 	fp_assign('g', ed_global);
 }
 	
-static char *gbl_commands = "apndcmPif!eEjqQrkwW=#;tyxsg\n";
+char *gbl_commands = "apndcmPif!eEjqQrkwW=#;tyxsg\n";
 
 void eval(parse_t *pt) {
 	printf("node from: %s", ll_s(pt->from));

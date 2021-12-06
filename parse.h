@@ -28,6 +28,7 @@ char *skipspaces(char *s);
 
 node_t *pt_from(parse_t *pt);
 parse_t *pt_make();
+void pt_set(parse_t *pt, node_t *from, node_t *to, char cmd, char *rest);
 
 /* 
  * Lets functions know that the values of 
@@ -35,6 +36,8 @@ parse_t *pt_make();
  * were not modified by parse functions
  */
 extern _Bool parse_defaults; 
+
+extern char *gbl_commands;
 
 /* eval */
 void eval(parse_t *pt);

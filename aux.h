@@ -23,6 +23,7 @@ char *regerror_aux(int errcode, regex_t *reg);
  */
 typedef struct ds_t ds_t;
 ds_t *ds_make();
+void ds_append(ds_t *ds, char c);
 void ds_set(ds_t *obj, char *s);
 char *ds_get_s(ds_t *obj);
 size_t ds_get_sz(ds_t *obj);
@@ -55,4 +56,5 @@ char *strsubs(re_t *re, char *line, char *exp);
 char *parse_global_command(regex_t *reg, char *exp);
 
 void read_command_list(yb_t *yb, char *cmd);
+void execute_command_list(yb_t *yb, node_t *from);
 #endif
