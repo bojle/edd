@@ -3,6 +3,7 @@
 /* Auxillary functions */
 
 #include <regex.h>
+#include "ll.h"
 
 char *skipspaces(char *s);
 char *strrep(char *str, regex_t *rep, char *with, _Bool matchall);
@@ -34,6 +35,8 @@ yb_t *yb_make();
 void yb_free(yb_t *yb);
 void yb_clear(yb_t *yb);
 size_t yb_nmembs(yb_t *yb);
+// TODO: remove this
+void yb_print(yb_t *yb);
 
 
 typedef struct re_t re_t;
@@ -48,4 +51,8 @@ void parse_tail(re_t *re, char *tail);
 void parse_subst(re_t *re, char *line, char *exp);
 void parse_regex(re_t *re, char *exp);
 char *strsubs(re_t *re, char *line, char *exp);
+
+char *parse_global_command(regex_t *reg, char *exp);
+
+void read_command_list(yb_t *yb, char *cmd);
 #endif

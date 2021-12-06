@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include "err.h"
 #include "io.h"
+#include "ll.h"
 
 #define REPLIM 200
 
@@ -300,6 +301,9 @@ yb_t *yb_make() {
 }
 
 void yb_free(yb_t *yb) {
+	if (yb->yb == NULL) {
+		return;
+	}
 	for (size_t i = 0; i < yb->nmemb; --i)	{
 		ds_free(yb->yb[i]);
 	}
@@ -476,3 +480,117 @@ char *re_replace(re_t *re, char *line, char *subst) {
 	}
 	return ds.s;
 }
+
+/* Command list:
+ * EG:
+ * 		a\
+ * 		append line 1\
+ * 		append line 2\
+ * 		append line 3\
+ * 		p
+ *
+ * 		m $\
+ * 		d
+ */
+
+void yb_print(yb_t *yb) {
+	for (int i = 0; i < (int)yb->nmemb; ++i) {
+		printf("%s\n", yb_at(yb, i));
+	}
+	printf("\n");
+}
+
+/* Load the regex in 'exp' in 'reg'; return the start of command-list */
+char *parse_global_command(regex_t *reg, char *exp) {
+	char delimiter = *exp++;
+	char *regex = exp;
+	exp = next_unescaped_delimiter(regex, delimiter);
+	exp = skipspaces(exp);
+
+	int err;
+	if ((err = regcomp(reg, regex, REG_EXTENDED)) != 0) {
+		err(&to_repl, regerror_aux(err, reg));
+	}
+	return exp;
+}
+
+void read_command_list(yb_t *yb, char *cmd) {
+	char *line = NULL;
+	size_t linecap;
+	size_t len = 0;
+
+	yb_clear(yb);
+	len = strlen(cmd);
+	if (cmd[len - 2] == '\\') {
+		cmd[len - 2] = '\n';
+		cmd[len - 1] = '\0';
+	}
+	yb_append(yb, cmd);
+	while (1) {
+		if ((len = io_read_line(&line, &linecap, stdin, NULL)) <= 0) {
+			err_normal(&to_repl, "%s", "No characters in the input stream");
+		}
+		if (line[len - 2] == '\\') {
+			line[len - 2] = '\n';
+			line[len - 1] = '\0';
+		}
+		yb_append(yb, line);
+		if (line[len - 1] == '\n' && line[len - 2] != '\\') {
+			break;
+		}
+	}
+	free(line);
+}
+
+void execute_command_list(yb_t *yb) {
+	for (int i = 0; i < yb->nmemb; ++i) {
+	}
+}
+
+
+#if 0
+void execute_command_list(node_t *from, char *cmd) {
+	char *line = NULL;
+	size_t linecap;
+	size_t len = 0;
+
+	char current_cmd;
+
+	while (*cmd != '\n') {
+		if (*cmd == 'a' || *cmd == 'i') {
+			current_cmd = *cmd;
+			cmd = skipspaces(++cmd);
+			if (*cmd != '\\') {
+				err_normal(&to_repl, "%s\n", "Invalid command suffix");
+			}
+			else {
+read_again:
+				if (io_read_line(&line, &linecap, stdin, NULL) < 0) {
+					if (!line) {
+						free(line);
+					}
+					err_normal(&to_repl, "%s\n", "Read Nothing");
+				}
+				len = strlen(line);
+				if (line[len - 2] == '\\') {
+					line[len - 2] = '\n';
+					line[len - 1] = '\0';
+				}
+				if (current_cmd == 'i') {
+					from = ll_prev(from, 1);
+				}
+				ll_add_next(from, line);
+				if (line[len - 1] == '\n') { // A backslash was found here
+					goto read_again;
+				}
+				else {
+					*cmd = '\n';
+				}
+			}
+		}
+	}
+}
+
+#endif
+
+

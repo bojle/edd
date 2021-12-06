@@ -25,7 +25,7 @@ parse.o: parse.c parse.h ll.h aux.h
 io.o: io.c io.h ll.h err.h ed.h aux.h
 	${cc} ${flags} -c io.c 
 
-aux.o: aux.c aux.h err.h io.h
+aux.o: aux.c aux.h err.h io.h ll.h
 	${cc} ${flags} -c aux.c 
 
 

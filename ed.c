@@ -62,6 +62,8 @@ static yb_t *gbl_yank_buf;
 
 static re_t *gbl_re;
 
+static yb_t *gbl_global_cmd_buf;
+
 void set_command_buf(char *cmd) {
 	if (cmd == ds_get_s(gbl_command_buf)) {
 		return;
@@ -77,6 +79,7 @@ void gbl_buffers_init() {
 	gbl_command_buf = ds_make();
 	gbl_yank_buf = yb_make();
 	gbl_re = re_make();
+	gbl_global_cmd_buf = yb_make();
 }
 
 void gbl_buffers_free() {
@@ -88,6 +91,9 @@ void gbl_buffers_free() {
 
 	re_free(gbl_re);
 	free(gbl_re);
+
+	yb_free(gbl_global_cmd_buf);
+	free(gbl_global_cmd_buf);
 }
 
 /* Yank Buffer Functions */
@@ -511,7 +517,7 @@ void ed_paste(node_t *from, node_t *to, char *rest) {
 }
 
 /*
- * rest should be of the form: 		
+ * 'rest' should be of the form: 		
  * 		[delimiter][RE][delimiter][SUBS][delimiter][TAIL]
  * 								OR
  *      A count suffix N or any permutation of characters r,g,p.
@@ -549,5 +555,27 @@ end:
 	while (from != to) {
 		ll_set_s(from, re_replace(gbl_re, ll_s(from), subst));
 		from = ll_next(from, 1);
+	}
+}
+
+
+void ed_global(node_t *from, node_t *to, char *rest) {
+	regex_t reg;
+	rest = parse_global_command(&reg, rest);
+
+	from = (from == global_head() ? ll_first_node() : from);
+	to = (to == global_tail() ? to : ll_next(to, 1));
+
+	node_t *node;
+	read_command_list(gbl_global_cmd_buf, rest);
+	while (from != to) {
+		node = ll_reg_next(from, &reg);	
+		if (node == NULL) {
+			printf("node was null, breaking\n");
+			break;
+		}
+		printf("%s", ll_s(node));
+		yb_print(gbl_global_cmd_buf);
+		from = ll_next(node, 1);
 	}
 }

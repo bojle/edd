@@ -121,7 +121,7 @@ node_t *ll_reg_next(node_t *node, regex_t *reg) {
 		}
 	}
 	gbl_current_node = node;
-	return node;
+	return NULL;
 }
 
 node_t *ll_reg_prev(node_t *node, regex_t *reg) {
@@ -131,7 +131,7 @@ node_t *ll_reg_prev(node_t *node, regex_t *reg) {
 		}
 	}
 	gbl_current_node = node;
-	return node;
+	return NULL;
 }
 
 
