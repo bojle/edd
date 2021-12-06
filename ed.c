@@ -609,3 +609,25 @@ void ed_global_interact(node_t *from, node_t *to, char *rest) {
 	}
 }
 
+void ed_global_invert(node_t *from, node_t *to, char *rest) {
+	regex_t reg;
+	rest = parse_global_command(&reg, rest);
+
+	if (parse_defaults) {
+		from = ll_first_node();
+		to = ll_last_node();
+	}
+	from = (from == global_head() ? ll_first_node() : from);
+	to = (to == global_tail() ? to : ll_next(to, 1));
+
+	node_t *node;
+	read_command_list(gbl_global_cmd_buf, rest);
+	while (from != to) {
+		node = ll_reg_next_invert(from, &reg);	
+		if (node == NULL) {
+			break;
+		}
+		execute_command_list(gbl_global_cmd_buf, node);
+		from = node;
+	}
+}

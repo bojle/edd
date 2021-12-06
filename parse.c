@@ -255,9 +255,10 @@ void fptr_init() {
 	fp_assign('s', ed_subs);
 	fp_assign('g', ed_global);
 	fp_assign('G', ed_global_interact);
+	fp_assign('v', ed_global_invert);
 }
 	
-char *gbl_commands = "apndcmPif!eEjqQrkwW=#;tyxsgG\n";
+char *gbl_commands = "apndcmPif!eEjqQrkwW=#;tyxsgGv\n";
 
 void eval(parse_t *pt) {
 	printf("node from: %s", ll_s(pt->from));

@@ -44,6 +44,8 @@ node_t *ll_prev(node_t *node, int offset);
 
 node_t *ll_reg_next(node_t *node, regex_t *reg);
 node_t *ll_reg_prev(node_t *node, regex_t *reg);
+node_t *ll_reg_next_invert(node_t *node, regex_t *reg);
+node_t *ll_reg_prev_invert(node_t *node, regex_t *reg);
 
 /* Linked lists are 0 indexed */
 node_t *ll_at(int n);

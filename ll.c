@@ -117,6 +117,7 @@ node_t *ll_prev(node_t *node, int offset) {
 node_t *ll_reg_next(node_t *node, regex_t *reg) {
 	for (node_t *nd = node->next; nd != global_tail(); nd = nd->next) {
 		if (regexec(reg, nd->s, 0, NULL, 0) == 0) {
+			gbl_current_node = nd;
 			return nd;
 		}
 	}
@@ -127,6 +128,29 @@ node_t *ll_reg_next(node_t *node, regex_t *reg) {
 node_t *ll_reg_prev(node_t *node, regex_t *reg) {
 	for (node_t *nd = node->prev; nd != global_head(); nd = nd->prev) {
 		if (regexec(reg, nd->s, 0, NULL, 0) == 0) {
+			gbl_current_node = nd;
+			return nd;
+		}
+	}
+	gbl_current_node = node;
+	return NULL;
+}
+
+node_t *ll_reg_next_invert(node_t *node, regex_t *reg) {
+	for (node_t *nd = node->next; nd != global_tail(); nd = nd->next) {
+		if (regexec(reg, nd->s, 0, NULL, 0) != 0) {
+			gbl_current_node = nd;
+			return nd;
+		}
+	}
+	gbl_current_node = node;
+	return NULL;
+}
+
+node_t *ll_reg_prev_invert(node_t *node, regex_t *reg) {
+	for (node_t *nd = node->prev; nd != global_head(); nd = nd->prev) {
+		if (regexec(reg, nd->s, 0, NULL, 0) != 0) {
+			gbl_current_node = nd;
 			return nd;
 		}
 	}

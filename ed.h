@@ -50,5 +50,6 @@ void ed_paste(node_t *from, node_t *to, char *rest);
 void ed_subs(node_t *from, node_t *to, char *rest);
 void ed_global(node_t *from, node_t *to, char *rest);
 void ed_global_interact(node_t *from, node_t *to, char *rest);
+void ed_global_invert(node_t *from, node_t *to, char *rest);
 
 #endif
