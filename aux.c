@@ -35,6 +35,9 @@ ds_t *ds_make() {
 }
 
 void ds_set(ds_t *obj, char *s) {
+	if (*s == '\0') {
+		return;
+	}
 	size_t sz = strlen(s);
 	if (sz > obj->sz) {
 		obj->s = realloc(obj->s, (sz+1) * sizeof(*(obj->s)));
@@ -109,6 +112,9 @@ typedef struct yb_t {
  */
 
 void yb_append(yb_t *yb, char *s) {
+	if (s == NULL || *s == '\0') {
+		return;
+	}
 	size_t sz = (yb->sz == 0 ? 1 : yb->sz);
 	if (yb->sz == yb->nmemb) {
 		yb->yb = realloc(yb->yb, (sz * 2) * sizeof(*(yb->yb)));
@@ -354,6 +360,9 @@ void read_command_list(yb_t *yb, char *cmd) {
 	size_t linecap;
 	size_t len = 0;
 
+	if (*cmd == '&') {
+		return;
+	}
 	yb_clear(yb);
 	len = strlen(cmd);
 	if (cmd[len - 2] == '\\') {
