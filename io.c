@@ -61,14 +61,10 @@ void io_write_file(char *filename) {
 }
 
 char *parse_filename(char *filename) {
-	regex_t rt;
-	int err;
-
-	/* Replace all unescaped '%' in 'cmd' with the default filename */
-	if ((err = regcomp(&rt, "[^\\]%", 0)) != 0) {
-		err(&to_repl, regerror_aux(err, &rt));
-	}
-	filename = strrep(filename, &rt, get_default_filename(), 1);
+	re_t *re = re_make();
+	parse_regex(re, "[^\\]%");
+	filename = re_replace(re, filename, get_default_filename());
+	free(re);
 	return filename;
 }
 

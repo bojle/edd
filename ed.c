@@ -14,7 +14,7 @@
 static char gbl_prompt[ED_PROMPT_SIZE] = ":";
 
 #define ED_DEFAULT_FILENAME_SIZE 4096
-static char gbl_default_filename[ED_DEFAULT_FILENAME_SIZE];
+static char gbl_default_filename[ED_DEFAULT_FILENAME_SIZE] = "man.txt";
 
 static _Bool gbl_saved = 0;
 
@@ -308,6 +308,7 @@ void ed_edit(node_t *from, node_t *to, char *rest) {
 	}
 	io_load_file(fp);
 	frompipe == 1 ? pclose(fp) : fclose(fp);
+	free(rest);
 	gbl_saved = 1;
 }
 
