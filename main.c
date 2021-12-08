@@ -4,6 +4,7 @@
 #include "ll.h"
 #include "ed.h"
 #include "parse.h"
+#include "undo.h"
 #include "io.h"
 
 jmp_buf to_repl;
@@ -30,6 +31,7 @@ int main(int argc, char *argv[]) {
 	}
 	ll_init();
 	fptr_init();
+	un_fptr_init();
 	gbl_buffers_init();
 
 	argv[1] = "man.txt";

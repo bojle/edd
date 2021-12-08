@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "aux.h"
+#include "undo.h"
 
 
 /* 
@@ -189,6 +190,15 @@ node_t *pt_from(parse_t *pt) {
 	return pt->from;
 }
 
+node_t *pt_to(parse_t *pt) {
+	return pt->to;
+}
+
+char pt_command(parse_t *pt) {
+	return pt->command;
+}
+
+
 parse_t *pt_make() {
 	parse_t *pt = calloc(1, sizeof(*pt));
 	pt->from = NULL;
@@ -211,10 +221,6 @@ void pt_set(parse_t *pt, node_t *from, node_t *to, char cmd, char *rest) {
  */
 typedef void (*fptr_t) (node_t *, node_t *, char *);
 
-#define FIRST_ASCII_CHAR '!'
-#define LAST_ASCII_CHAR 'z'
-/* Size of fptr_table; accomodates all the characters that could be a command */
-#define FPTR_ARRAY_SIZE (LAST_ASCII_CHAR - FIRST_ASCII_CHAR + 1) 
 static fptr_t fptr_table[FPTR_ARRAY_SIZE];
 
 static int fp_hash(char c) {
@@ -257,9 +263,11 @@ void fptr_init() {
 	fp_assign('G', ed_global_interact);
 	fp_assign('v', ed_global_invert);
 	fp_assign('V', ed_global_interact_invert);
+	fp_assign('u', ed_undo);
+	fp_assign('U', ed_redo);
 }
 	
-char *gbl_commands = "apndcmPif!eEjqQrkwW=#;tyxsgGvV\n";
+char *gbl_commands = "apndcmPif!eEjqQrkwW=#;tyxsgGvVuU\n";
 
 void eval(parse_t *pt) {
 	printf("node from: %s", ll_s(pt->from));

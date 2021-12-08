@@ -5,7 +5,16 @@
 #include <stdlib.h>
 #include <regex.h>
 
-/* should the list be 0 or 1 indexed? */
+/*
+ * The underlying data structure of edd is a doubly linked list with three 
+ * extra pointers: head, current and tail. This file contains that data 
+ * structure. Head and tail are hollow nodes, * i.e. they do not have any 
+ * values. Therefore, the first and last nodes of the list are (head + 1) 
+ * and (tail - 1) nodes respectievely. The 'current' node is not a node in 
+ * itself, but a pointer to an existing node between (head + 1) and (tail - 1).
+ */
+
+/* should address '0' correspond to the first line or address '1' */
 #define ED_INDEXING 1
 
 struct node_t{
@@ -14,6 +23,8 @@ struct node_t{
 	ssize_t size;
 	struct node_t *next;
 };
+
+node_t brake;
 
 static node_t *gbl_current_node;
 static node_t *gbl_head_node;
@@ -32,22 +43,22 @@ static node_t *ll_alloc_node(size_t size) {
 	}
 
 	if (size == 0) {
-		goto end; // do not allocate space for the string
+		/* Do not allocate space for the string */
+		goto end; 
 	}
-	node->s = calloc(size + 1, sizeof(*(node->s))); // +1 for null byte
+	/* +1 for null byte at the end */
+	node->s = calloc(size + 1, sizeof(*(node->s))); 
 	if (!node->s) {
 		err(&to_repl, strerror(errno));
 	}
-
 end:
 	return node;
 }
 
 node_t *ll_add_next(node_t *node,  char *s) {
 	node_t *newnode = ll_make_node(node, s, node->next);
-	node_t *next_node = node->next;
-	node->next = newnode;
-	next_node->prev = newnode;
+	ll_attach_nodes(newnode, node->next);
+	ll_attach_nodes(node, newnode);
 	gbl_current_node = newnode;
 	gbl_len++;
 	return newnode;
@@ -89,6 +100,13 @@ node_t *ll_remove_node(node_t *node) {
 	gbl_len--;
 	return next_node;
 }	
+
+node_t *ll_remove_shallow(node_t *node) {
+	ll_detach_node(node);
+	gbl_current_node = node->next;
+	gbl_len--;
+	return node->next;
+}
 	
 node_t *ll_next(node_t *node, int offset) {
 	if (offset == 1) {
@@ -266,4 +284,8 @@ void ll_set_s(node_t *n, char *s) {
 		return;
 	}
 	n->s = s;
+}
+
+void ll_detach_node(node_t *node) {
+	ll_attach_nodes(node->prev, node->next);
 }

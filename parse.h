@@ -29,6 +29,7 @@ char *skipspaces(char *s);
 node_t *pt_from(parse_t *pt);
 parse_t *pt_make();
 void pt_set(parse_t *pt, node_t *from, node_t *to, char cmd, char *rest);
+char pt_command(parse_t *pt);
 
 /* 
  * Lets functions know that the values of 
@@ -40,6 +41,12 @@ extern _Bool parse_defaults;
 extern char *gbl_commands;
 
 /* eval */
+
+#define FIRST_ASCII_CHAR '!'
+#define LAST_ASCII_CHAR 'z'
+/* Size of fptr_table; accomodates all the characters that could be a command */
+#define FPTR_ARRAY_SIZE (LAST_ASCII_CHAR - FIRST_ASCII_CHAR + 1) 
+
 void eval(parse_t *pt);
 void fptr_init();
 

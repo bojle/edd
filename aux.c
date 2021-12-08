@@ -97,6 +97,20 @@ void ds_cat_e(ds_t *ds, char *sp, char *ep) {
 	}
 }
 
+char ds_pop(ds_t *ds) {
+	if (ds->nmemb == 0) {
+		return '\0';
+	}
+	ds->nmemb--;
+	return ds->s[ds->nmemb];
+}
+
+char ds_false_push(ds_t *ds) {
+	ds->nmemb++;
+	return ds->s[ds->nmemb - 1];
+}
+
+
 /* Yank buf */
 
 typedef struct yb_t {
@@ -428,53 +442,4 @@ void execute_command_list(yb_t *yb, node_t *from) {
 			err_normal(&to_repl, "%s\n", "Invalid Command");
 		}
 	}
-}
-
-/* UNDO */
-
-/* Buffers */
-
-typedef struct node_buf {
-	node_t **nb;
-	size_t sz;
-	size_t nmemb;
-	size_t initialized;
-} nb_t;
-
-nb_t *nb_make() {
-	nb_t *nb = calloc(1, sizeof(*nb));
-	nb->nb = NULL;
-	nb->sz = 0;
-	nb->nmemb = 0;
-	nb->initialized = 0;
-	return nb;
-}
-
-void nb_push(nb_t *nb, node_t *node) {
-	if (node == NULL) {
-		return;
-	}
-	size_t sz = (nb->sz == 0 ? 1 : nb->sz);
-	if (nb->sz == nb->nmemb) {
-		nb->nb = realloc(nb->nb, (sz * 2) * sizeof(*(nb->nb)));
-		nb->sz = sz * 2;
-	}
-	if (nb->nmemb >= nb->initialized) {
-		nb->initialized++;
-	}
-	nb->nb[nb->nmemb] = node;
-	nb->nmemb++;
-}
-
-node_t *nb_top(nb_t *nb) {
-	return nb->nb[nb->nmemb - 1];
-}
-
-node_t *nb_pop(nb_t *nb) {
-	nb->nmemb--;
-	return nb->nb[nb->nmemb + 1];
-}
-
-void nb_free(nb_t *nb) {
-	free(nb->nb);
 }

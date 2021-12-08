@@ -9,6 +9,7 @@
 #include "ed.h"
 #include "io.h"
 #include "err.h"
+#include "undo.h"
 
 #define ED_PROMPT_SIZE 64
 static char gbl_prompt[ED_PROMPT_SIZE] = ":";
@@ -57,11 +58,8 @@ char *get_default_filename() {
 
 
 static ds_t *gbl_command_buf;
-
 static yb_t *gbl_yank_buf;
-
 static re_t *gbl_re;
-
 static yb_t *gbl_global_cmd_buf;
 
 void set_command_buf(char *cmd) {
@@ -142,15 +140,18 @@ void clear_mark(int at) {
 
 /* ed_ functions */
 void ed_append(node_t *from, node_t *to, char *rest) {
+	push_to_undo_buf('a');
 	from = (from == global_tail() ? ll_last_node() : from);
 	char *line = NULL;
 	size_t bytes = 0;
 	size_t lines = 0;
 	size_t linecap;
+	push_to_append_buf(&brake);
 	while ((bytes = io_read_line(&line, &linecap, stdin, NULL)) > 0) {
 		if (line[0] == '.')
 			break;
 		from = ll_add_next(from, line);
+		push_to_append_buf(from);
 		lines++;
 		bytes += bytes;
 	}
@@ -160,6 +161,7 @@ void ed_append(node_t *from, node_t *to, char *rest) {
 }
 
 void ed_insert(node_t *from, node_t *to, char *rest) {
+	push_to_undo_buf('i');
 	from = (from == global_tail() ? ll_last_node() : from);
 	char *line = NULL;
 	size_t bytes = 0;
@@ -167,10 +169,12 @@ void ed_insert(node_t *from, node_t *to, char *rest) {
 	size_t linecap;
 	/* This line makes ed_insert different from ed_append */
 	from = ll_prev(from, 1);
+	push_to_append_buf(&brake);
 	while ((bytes = io_read_line(&line, &linecap, stdin, NULL)) > 0) {
 		if (line[0] == '.')
 			break;
 		from = ll_add_next(from, line);
+		push_to_append_buf(from);
 		lines++;
 		bytes += bytes;
 	}
@@ -211,11 +215,14 @@ void ed_print_n(node_t *from, node_t *to, char *rest) {
 }
 
 void ed_delete(node_t *from, node_t *to, char *rest) {
+	push_to_undo_buf('d');
 	to = (to == global_tail() ? to : ll_next(to, 1));
 	from = (from == global_tail() ? ll_prev(from, 1) : from);
 	
+	push_to_delete_buf(&brake);
 	while (from != to) {
-		from = ll_remove_node(from);
+		push_to_delete_buf(from);
+		from = ll_remove_shallow(from);
 	}	
 	gbl_saved = 0;
 }
@@ -656,4 +663,12 @@ void ed_global_interact_invert(node_t *from, node_t *to, char *rest) {
 		execute_command_list(gbl_global_cmd_buf, node);
 		from = node;
 	}
+}
+
+void ed_undo(node_t *from, node_t *to, char *rest) {
+	undo();
+}
+
+void ed_redo(node_t *from, node_t *to, char *rest) {
+	redo();
 }
