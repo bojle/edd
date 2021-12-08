@@ -430,48 +430,51 @@ void execute_command_list(yb_t *yb, node_t *from) {
 	}
 }
 
+/* UNDO */
 
-#if 0
-void execute_command_list(node_t *from, char *cmd) {
-	char *line = NULL;
-	size_t linecap;
-	size_t len = 0;
+/* Buffers */
 
-	char current_cmd;
+typedef struct node_buf {
+	node_t **nb;
+	size_t sz;
+	size_t nmemb;
+	size_t initialized;
+} nb_t;
 
-	while (*cmd != '\n') {
-		if (*cmd == 'a' || *cmd == 'i') {
-			current_cmd = *cmd;
-			cmd = skipspaces(++cmd);
-			if (*cmd != '\\') {
-				err_normal(&to_repl, "%s\n", "Invalid command suffix");
-			}
-			else {
-read_again:
-				if (io_read_line(&line, &linecap, stdin, NULL) < 0) {
-					if (!line) {
-						free(line);
-					}
-					err_normal(&to_repl, "%s\n", "Read Nothing");
-				}
-				len = strlen(line);
-				if (line[len - 2] == '\\') {
-					line[len - 2] = '\n';
-					line[len - 1] = '\0';
-				}
-				if (current_cmd == 'i') {
-					from = ll_prev(from, 1);
-				}
-				ll_add_next(from, line);
-				if (line[len - 1] == '\n') { // A backslash was found here
-					goto read_again;
-				}
-				else {
-					*cmd = '\n';
-				}
-			}
-		}
-	}
+nb_t *nb_make() {
+	nb_t *nb = calloc(1, sizeof(*nb));
+	nb->nb = NULL;
+	nb->sz = 0;
+	nb->nmemb = 0;
+	nb->initialized = 0;
+	return nb;
 }
 
-#endif
+void nb_push(nb_t *nb, node_t *node) {
+	if (node == NULL) {
+		return;
+	}
+	size_t sz = (nb->sz == 0 ? 1 : nb->sz);
+	if (nb->sz == nb->nmemb) {
+		nb->nb = realloc(nb->nb, (sz * 2) * sizeof(*(nb->nb)));
+		nb->sz = sz * 2;
+	}
+	if (nb->nmemb >= nb->initialized) {
+		nb->initialized++;
+	}
+	nb->nb[nb->nmemb] = node;
+	nb->nmemb++;
+}
+
+node_t *nb_top(nb_t *nb) {
+	return nb->nb[nb->nmemb - 1];
+}
+
+node_t *nb_pop(nb_t *nb) {
+	nb->nmemb--;
+	return nb->nb[nb->nmemb + 1];
+}
+
+void nb_free(nb_t *nb) {
+	free(nb->nb);
+}
