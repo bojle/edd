@@ -139,8 +139,8 @@ void clear_mark(int at) {
 
 
 /* ed_ functions */
-void ed_append(node_t *from, node_t *to, char *rest) {
-	push_to_undo_buf('a');
+
+static size_t append_aux(node_t *from) {
 	from = (from == global_tail() ? ll_last_node() : from);
 	char *line = NULL;
 	size_t bytes = 0;
@@ -155,31 +155,23 @@ void ed_append(node_t *from, node_t *to, char *rest) {
 		lines++;
 		bytes += bytes;
 	}
-	printf("%ld line%s appended\n", lines, (lines==1)?"":"s");
 	free(line);
+	return lines;
+}
+
+
+void ed_append(node_t *from, node_t *to, char *rest) {
+	push_to_undo_buf('a');
+	size_t lines = append_aux(from);
+	io_write_line(stdout, "%ld line%s appended\n", lines, (lines==1)?"":"s");
 	gbl_saved = 0;
 }
 
 void ed_insert(node_t *from, node_t *to, char *rest) {
 	push_to_undo_buf('i');
 	from = (from == global_tail() ? ll_last_node() : from);
-	char *line = NULL;
-	size_t bytes = 0;
-	size_t lines = 0;
-	size_t linecap;
-	/* This line makes ed_insert different from ed_append */
-	from = ll_prev(from, 1);
-	push_to_append_buf(&brake);
-	while ((bytes = io_read_line(&line, &linecap, stdin, NULL)) > 0) {
-		if (line[0] == '.')
-			break;
-		from = ll_add_next(from, line);
-		push_to_append_buf(from);
-		lines++;
-		bytes += bytes;
-	}
-	printf("%ld line%s inserted\n", lines, (lines==1)?"":"s");
-	free(line);
+	size_t lines = append_aux(ll_prev(from, 1));
+	io_write_line(stdout, "%ld line%s inserted\n", lines, (lines==1)?"":"s");
 	gbl_saved = 0;
 }
 
@@ -214,22 +206,31 @@ void ed_print_n(node_t *from, node_t *to, char *rest) {
 	}
 }
 
-void ed_delete(node_t *from, node_t *to, char *rest) {
-	push_to_undo_buf('d');
+static size_t delete_aux(node_t *from, node_t *to) {
 	to = (to == global_tail() ? to : ll_next(to, 1));
 	from = (from == global_tail() ? ll_prev(from, 1) : from);
 	
+	size_t lines = 0;
 	push_to_delete_buf(&brake);
 	while (from != to) {
 		push_to_delete_buf(from);
 		from = ll_remove_shallow(from);
+		lines++;
 	}	
+	return lines;
+}
+
+void ed_delete(node_t *from, node_t *to, char *rest) {
+	push_to_undo_buf('d');
+	delete_aux(from, to);
 	gbl_saved = 0;
 }
 
 void ed_change(node_t *from, node_t *to, char *rest) {
-	ed_delete(from, to, rest);
-	ed_insert(global_current(), NULL, NULL);
+	push_to_undo_buf('c');
+	size_t lines = delete_aux(from, to);
+	append_aux(ll_prev(from, 1));
+	io_write_line(stdout, "%ld line%s changed\n", lines, (lines==1)?"":"s");
 	gbl_saved = 0;
 }
 

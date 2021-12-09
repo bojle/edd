@@ -45,6 +45,10 @@ static node_t *nb_pop(nb_t *nb) {
 	return nb->nb[nb->nmemb];
 }
 
+static node_t *nb_at(nb_t *nb, int i) {
+	return nb->nb[i];
+}
+
 static void nb_free(nb_t *nb) {
 	free(nb->nb);
 }
@@ -88,8 +92,35 @@ static void re_append() {
 	}
 }
 
+/*
+ * change is a delete followed by an insert.
+ * un_change is a delete of what was inserted and
+ * insert of what was deleted
+ */
+static void un_change() {
+	nb_t tmp_buf = { .sz = 0, .nmemb = 0, .initialized = 0 };
+	node_t *current;
 
-/* Function pointer type for functions of this type: void foo(void) */
+	/* Delete what was inserted */
+	nb_push(&tmp_buf, &brake);
+	while ((current = nb_pop(&gbl_append_buf)) != &brake) {
+		ll_detach_node(current);
+		nb_push(&tmp_buf, current);
+	}
+
+	/* Insert what was deleted */
+	re_append();
+
+	/* Push contents of tmp_buf to delete_buf */
+	for (int i = 0; i < tmp_buf.nmemb; ++i) {
+		push_to_delete_buf(nb_at(&tmp_buf, i));
+	}
+}
+
+/********************************************************************\
+|* Function pointer type for functions of this type: void foo(void) *|
+\********************************************************************/
+
 typedef void (*fptr_t) (void);
 
 static fptr_t fptr_table_undo[FPTR_ARRAY_SIZE];
@@ -109,10 +140,12 @@ void un_fptr_init() {
 	fp_assign(fptr_table_undo, 'a', un_append);
 	fp_assign(fptr_table_undo, 'i', un_append);
 	fp_assign(fptr_table_undo, 'd', re_append);
+	fp_assign(fptr_table_undo, 'c', un_change);
 	/* Redo */
 	fp_assign(fptr_table_redo, 'a', re_append);
 	fp_assign(fptr_table_redo, 'i', re_append);
 	fp_assign(fptr_table_redo, 'd', un_append);
+	fp_assign(fptr_table_redo, 'c', un_change);
 }
 
 void push_to_append_buf(node_t *node) {
