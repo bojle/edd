@@ -110,6 +110,10 @@ char ds_false_push(ds_t *ds) {
 	return ds->s[ds->nmemb - 1];
 }
 
+int ds_nmembs(ds_t *ds) {
+	return ds->nmemb;
+}
+
 
 /* Yank buf */
 
@@ -200,17 +204,26 @@ void re_free(re_t *re) {
 	}
 }
 
+
 ds_t *re_get_subst(re_t *re) {
 	return re->subst;
 }
 
+int re_has_subst(re_t *re) {
+	return !(re->subst == NULL);
+}
+
 #define toggle(a) (a = (a == 1 ? 0 : 1))
+#define toggle_on(a) (a = 1)
 
 
 #define NMATCH 200
 regmatch_t pmatch[NMATCH];
 
 void parse_regex(re_t *re, char *exp) {
+	if (exp == NULL) {
+		return;
+	}
 	int err;
 	if ((err = regcomp(&re->re, exp, REG_EXTENDED)) != 0) {
 		err_normal(&to_repl, "%s\n", regerror_aux(err, &re->re));
@@ -218,7 +231,9 @@ void parse_regex(re_t *re, char *exp) {
 }
 
 void parse_subst(re_t *re, char *line, char *exp) {
-
+	if (exp == NULL) {
+		exp = ds_get_s(re->subst);
+	}
 	int err;
 	if ((err = regexec(&re->re, line, NMATCH, pmatch, 0)) != 0) { 
 		pmatch[0].rm_so = -1;
@@ -248,6 +263,41 @@ void parse_subst(re_t *re, char *line, char *exp) {
 
 void parse_tail(re_t *re, char *tail) {
 	/* N, r, p, g */
+	if (tail == NULL || *tail == '\0') {
+		return;
+	}
+	if (*tail == '\n') {
+		re->number = 1;
+		re->N = 1;
+	}
+
+	for (; *tail; tail++) {
+		if (isdigit(*tail)) {
+			re->N = strtol(tail, &tail, 10);
+			tail--;
+			re->number = 1;
+		}
+		else {
+			switch (*tail) {
+				case 'p':
+					toggle_on(re->print);
+					break;
+				case 'g':
+					toggle_on(re->global);
+					break;
+			}
+		}
+	}
+}
+
+void parse_tail_alt(re_t *re, char *tail) {
+	if (tail == NULL || *tail == '\0') {
+		return;
+	}
+	if (*tail == '\n') {
+		re->number = 1;
+		re->N = 1;
+	}
 	for (; *tail; tail++) {
 		if (isdigit(*tail)) {
 			re->N = strtol(tail, &tail, 10);
@@ -265,9 +315,6 @@ void parse_tail(re_t *re, char *tail) {
 				case 'g':
 					toggle(re->global);
 					break;
-				default:
-					re->number = 0;
-					break;
 			}
 		}
 	}
@@ -275,8 +322,11 @@ void parse_tail(re_t *re, char *tail) {
 
 char *next_unescaped_delimiter(char *exp, char delimiter) {
 	++exp;
+	if (exp == NULL || *exp == '\0') {
+		return NULL;
+	}
 	for (; ; ++exp) {
-		if (*exp == delimiter && *(exp -1) != '\\') {
+		if (*exp == '\0' || (*exp == delimiter && *(exp -1) != '\\')) {
 			break;
 		}
 	}
@@ -370,10 +420,7 @@ char *parse_global_command(regex_t *reg, char *exp) {
 }
 
 void read_command_list(yb_t *yb, char *cmd) {
-	char *line = NULL;
-	size_t linecap;
 	size_t len = 0;
-
 	if (*cmd == '&') {
 		return;
 	}
@@ -387,6 +434,9 @@ void read_command_list(yb_t *yb, char *cmd) {
 	if (cmd[len-1] == '\n' && cmd[len - 2] != '\\') {
 		return;
 	}
+
+	char *line = NULL;
+	size_t linecap;
 
 	while (1) {
 		if ((len = io_read_line(&line, &linecap, stdin, NULL)) <= 0) {
@@ -435,6 +485,7 @@ void execute_command_list(yb_t *yb, node_t *from) {
 			parse_t *pt = pt_make();
 			cmd++;
 			pt_set(pt, from, from, current_cmd, skipspaces(cmd));
+			parse_defaults = 0;
 			eval(pt);
 			free(pt);
 		}

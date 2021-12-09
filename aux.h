@@ -30,6 +30,7 @@ size_t ds_get_sz(ds_t *obj);
 void ds_free(ds_t *obj);
 char ds_pop(ds_t *ds);
 char ds_false_push(ds_t *ds);
+int ds_nmembs(ds_t *ds);
 
 typedef struct yb_t yb_t;
 void yb_append(yb_t *yb, char *s);
@@ -46,11 +47,13 @@ typedef struct re_t re_t;
 re_t *re_make();
 void re_free(re_t *re);
 ds_t *re_get_subst(re_t *re);
+int re_has_subst(re_t *re);
 
 char *next_unescaped_delimiter(char *exp, char delimiter);
 char *re_replace(re_t *re, char *line, char *subst);
 char *next_unescaped_delimiter(char *exp, char delimiter);
 void parse_tail(re_t *re, char *tail);
+void parse_tail_alt(re_t *re, char *tail);
 void parse_subst(re_t *re, char *line, char *exp);
 void parse_regex(re_t *re, char *exp);
 char *strsubs(re_t *re, char *line, char *exp);

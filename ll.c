@@ -26,9 +26,9 @@ struct node_t{
 
 node_t brake;
 
-static node_t *gbl_current_node;
-static node_t *gbl_head_node;
-static node_t *gbl_tail_node;
+static node_t gbl_current_node;
+static node_t gbl_head_node;
+static node_t gbl_tail_node;
 static ssize_t gbl_len;
 
 static void ll_free_node(node_t* node) {
@@ -59,7 +59,7 @@ node_t *ll_add_next(node_t *node,  char *s) {
 	node_t *newnode = ll_make_node(node, s, node->next);
 	ll_attach_nodes(newnode, node->next);
 	ll_attach_nodes(node, newnode);
-	gbl_current_node = newnode;
+	ll_set_current_node(newnode);	
 	gbl_len++;
 	return newnode;
 }
@@ -68,7 +68,7 @@ node_t *ll_add_prev(node_t *node,  char *s) {
 	node_t *newnode = ll_make_node(node->prev, s, node);
 	node->prev->next = newnode;
 	node->prev = newnode;
-	gbl_current_node = newnode;
+	ll_set_current_node(newnode);	
 	gbl_len++;
 	return newnode;
 }
@@ -82,7 +82,7 @@ node_t *ll_make_node(node_t *prev, char *s, node_t *next) {
 	if (size != 0) {
 		strncpy(nd->s, s, size + 1);
 	}
-	gbl_current_node = nd;
+	ll_set_current_node(nd);	
 	return nd;
 }
 
@@ -96,14 +96,14 @@ node_t *ll_remove_node(node_t *node) {
 		next_node->prev = prev_node;
 	}
 	ll_free_node(node);
-	gbl_current_node = next_node;
+	ll_set_current_node(next_node);	
 	gbl_len--;
 	return next_node;
 }	
 
 node_t *ll_remove_shallow(node_t *node) {
 	ll_detach_node(node);
-	gbl_current_node = node->next;
+	ll_set_current_node(node->next);	
 	gbl_len--;
 	return node->next;
 }
@@ -116,7 +116,7 @@ node_t *ll_next(node_t *node, int offset) {
 		node = node->next;
 		offset--;
 	}
-	gbl_current_node = node;
+	ll_set_current_node(node);	
 	return node;
 }
 
@@ -128,51 +128,51 @@ node_t *ll_prev(node_t *node, int offset) {
 		node = node->prev;
 		offset--;
 	}
-	gbl_current_node = node;
+	ll_set_current_node(node);	
 	return node;
 }
 
 node_t *ll_reg_next(node_t *node, regex_t *reg) {
-	for (node_t *nd = node->next; nd != global_tail(); nd = nd->next) {
+	for (node_t *nd = node; nd != global_tail(); nd = nd->next) {
 		if (regexec(reg, nd->s, 0, NULL, 0) == 0) {
-			gbl_current_node = nd;
+			ll_set_current_node(nd);
 			return nd;
 		}
 	}
-	gbl_current_node = node;
+	ll_set_current_node(node);	
 	return NULL;
 }
 
 node_t *ll_reg_prev(node_t *node, regex_t *reg) {
-	for (node_t *nd = node->prev; nd != global_head(); nd = nd->prev) {
+	for (node_t *nd = node; nd != global_head(); nd = nd->prev) {
 		if (regexec(reg, nd->s, 0, NULL, 0) == 0) {
-			gbl_current_node = nd;
+			ll_set_current_node(nd);
 			return nd;
 		}
 	}
-	gbl_current_node = node;
+	ll_set_current_node(node);	
 	return NULL;
 }
 
 node_t *ll_reg_next_invert(node_t *node, regex_t *reg) {
-	for (node_t *nd = node->next; nd != global_tail(); nd = nd->next) {
+	for (node_t *nd = node; nd != global_tail(); nd = nd->next) {
 		if (regexec(reg, nd->s, 0, NULL, 0) != 0) {
-			gbl_current_node = nd;
+			ll_set_current_node(nd);
 			return nd;
 		}
 	}
-	gbl_current_node = node;
+	ll_set_current_node(node);	
 	return NULL;
 }
 
 node_t *ll_reg_prev_invert(node_t *node, regex_t *reg) {
-	for (node_t *nd = node->prev; nd != global_head(); nd = nd->prev) {
+	for (node_t *nd = node; nd != global_head(); nd = nd->prev) {
 		if (regexec(reg, nd->s, 0, NULL, 0) != 0) {
-			gbl_current_node = nd;
+			ll_set_current_node(nd);
 			return nd;
 		}
 	}
-	gbl_current_node = node;
+	ll_set_current_node(node);	
 	return NULL;
 }
 
@@ -193,39 +193,28 @@ node_t *ll_attach_nodes(node_t *n1, node_t *n2) {
 }
 
 node_t *ll_init() {
-	gbl_head_node = ll_make_node(NULL, NULL, NULL);
-	gbl_tail_node = ll_make_node(gbl_head_node, NULL, NULL);
-	gbl_head_node->next = gbl_tail_node;
-	gbl_current_node = gbl_head_node;
+	ll_attach_nodes(&gbl_head_node, &gbl_tail_node);
+	ll_set_current_node(&gbl_head_node);
 	gbl_len = 0;
-	return gbl_head_node;
+	return &gbl_head_node;
 }
 
 void ll_free() {
-	if (gbl_len <= 0) {
-		goto end;
-	}
 	node_t *node = ll_first_node();
 	while (node != global_tail()) {
 		node = ll_remove_node(node);
 	}
-end:
-	ll_free_node(gbl_head_node);
-	ll_free_node(gbl_tail_node);
-	/* gbl_current_node is not freed because it does not exist.
-	 * It is but a pointer to some other existing nodes
-	 */
 }
 
 node_t *global_head() {
-	return gbl_head_node;
+	return &gbl_head_node;
 }
 
 node_t *global_current() {
-	return gbl_current_node;
+	return &gbl_current_node;
 }
 node_t *global_tail() {
-	return gbl_tail_node;
+	return &gbl_tail_node;
 }
 
 ssize_t ll_node_size(node_t *node) {
@@ -233,11 +222,11 @@ ssize_t ll_node_size(node_t *node) {
 }
 
 node_t *ll_first_node() {
-	return gbl_head_node->next;
+	return gbl_head_node.next;
 }
 
 node_t *ll_last_node() {
-	return gbl_tail_node->prev;
+	return gbl_tail_node.prev;
 }
 
 /* Concatenate strings of n1 and n2, delete n2 */
@@ -254,7 +243,7 @@ node_t *ll_join_nodes(node_t *n1, node_t *n2) {
 	n1->size = new_sz;
 	strncat(n1->s, n2->s, n2->size);
 	ll_remove_node(n2);
-	gbl_current_node = n1;
+	ll_set_current_node(n1);
 	return n1;
 }
 
@@ -273,10 +262,10 @@ int ll_node_index(node_t *node) {
 
 void ll_set_current_node(node_t *node) {
 	if (node == global_tail()) {
-		gbl_current_node = ll_last_node();
+		gbl_current_node = *(ll_last_node());
 		return;
 	}
-	gbl_current_node = node;
+	gbl_current_node = *node;
 }
 
 void ll_set_s(node_t *n, char *s) {
