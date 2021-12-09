@@ -35,6 +35,6 @@ int main(int argc, char *argv[]) {
 	gbl_buffers_init();
 
 	argv[1] = "man.txt";
-	ed_edit_force(NULL, NULL, argv[1]);
+	edit_aux(argv[1]);
 	repl();
 }

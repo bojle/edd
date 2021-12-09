@@ -31,7 +31,7 @@ static node_t gbl_head_node;
 static node_t gbl_tail_node;
 static ssize_t gbl_len;
 
-static void ll_free_node(node_t* node) {
+void ll_free_node(node_t* node) {
 	free((char *)node->s);
 	free((node_t *)node);
 }

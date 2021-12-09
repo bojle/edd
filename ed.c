@@ -17,7 +17,7 @@ static char gbl_prompt[ED_PROMPT_SIZE] = ":";
 #define ED_DEFAULT_FILENAME_SIZE 4096
 static char gbl_default_filename[ED_DEFAULT_FILENAME_SIZE] = "man.txt";
 
-static _Bool gbl_saved = 0;
+static _Bool gbl_saved = 1;
 
 void set_prompt(char *s) {
 	size_t sz = strlen(s);
@@ -43,7 +43,7 @@ void set_default_filename(char *s) {
 				"ERR: Filename should not be more than %d characters\n", 
 				ED_DEFAULT_FILENAME_SIZE-1);
 	}
-	strncpy(gbl_default_filename, s, size);
+	strncpy(gbl_default_filename, s, size+1);
 	if (gbl_default_filename[size - 1] == '\n') {
 		gbl_default_filename[size - 1] = '\0';
 	}
@@ -234,7 +234,9 @@ void ed_change(node_t *from, node_t *to, char *rest) {
 	gbl_saved = 0;
 }
 
+
 void ed_move(node_t *from, node_t *to, char *rest) {
+	push_to_undo_buf('m');
 	from = (from == global_head() ? ll_first_node() : from);
 
 	parse_t *pt = pt_make();
@@ -245,6 +247,13 @@ void ed_move(node_t *from, node_t *to, char *rest) {
 	move_to = (move_to == global_tail() ? ll_last_node(): move_to);
 	node_t *move_to_subsequent = ll_next(move_to, 1);
 
+	push_to_append_buf(&brake);
+	push_to_append_buf(ll_prev(from, 1));
+	push_to_append_buf(from);
+	push_to_append_buf(to);
+	push_to_append_buf(ll_next(to, 1));
+	push_to_append_buf(move_to);
+	push_to_append_buf(move_to_subsequent);
 	/* 
 	 * from->prev <-> to->next
 	 * move_to <-> from 
@@ -287,10 +296,9 @@ void ed_shell(node_t *from, node_t *to, char *rest) {
 	pclose(fp);
 }
 
-void ed_edit(node_t *from, node_t *to, char *rest) {
-	if (!gbl_saved) {
-		err_normal(&to_repl, "%s", 
-				"No write since last change. Use 'E' to override or save changes.\n");
+void edit_aux(char *rest) {
+	if (*rest == '\n' || *rest == '\0') {
+		err_normal(&to_repl, "%s\n", "Error: No arguments");
 	}
 	rest = parse_filename(rest);
 
@@ -310,13 +318,27 @@ void ed_edit(node_t *from, node_t *to, char *rest) {
 		set_default_filename(rest);
 		fp = fileopen(get_default_filename(), "r");
 	}
+	/* Remove existing nodes */
 	node_t *node = ll_first_node();
 	while (node != global_tail()) {
 		node = ll_remove_node(node);
 	}
+	/* Load new nodes */
 	io_load_file(fp);
 	frompipe == 1 ? pclose(fp) : fclose(fp);
 	free(rest);
+}
+
+void ed_edit(node_t *from, node_t *to, char *rest) {
+	push_to_undo_buf('e');
+	push_to_delete_buf(&brake);
+	push_to_delete_buf(ll_make_node(NULL, get_default_filename(), NULL));
+
+	if (!gbl_saved) {
+		err_normal(&to_repl, "%s", 
+				"No write since last change. Use 'E' to override or save changes.\n");
+	}
+	edit_aux(rest);
 	gbl_saved = 1;
 }
 

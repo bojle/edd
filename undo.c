@@ -3,6 +3,7 @@
 #include "parse.h"
 #include "aux.h"
 #include "err.h"
+#include "ed.h"
 #include <stdlib.h>
 
 /* UNDO */
@@ -117,6 +118,37 @@ static void un_change() {
 	}
 }
 
+static void un_move() {
+	node_t *move_to_subsequent = nb_pop(&gbl_append_buf);
+	node_t *move_to = nb_pop(&gbl_append_buf);
+	node_t *to_next = nb_pop(&gbl_append_buf);
+	node_t *to = nb_pop(&gbl_append_buf);
+	node_t *from = nb_pop(&gbl_append_buf);
+	node_t *from_prev = nb_pop(&gbl_append_buf);
+
+	/* Pop the brakes off */
+	nb_pop(&gbl_append_buf);
+
+	ll_attach_nodes(from_prev, from);
+	ll_attach_nodes(to, to_next);
+	ll_attach_nodes(move_to, move_to_subsequent);
+}
+
+static void re_move() {
+	// TODO
+}
+
+
+static void un_edit() {
+	node_t *current = nb_pop(&gbl_delete_buf);
+	nb_pop(&gbl_delete_buf);
+	char *filename = ll_s(current);
+	ed_edit(NULL, NULL, filename);
+	undo_pop(&gbl_undo_buf);
+	ll_free_node(current);
+}
+
+
 /********************************************************************\
 |* Function pointer type for functions of this type: void foo(void) *|
 \********************************************************************/
@@ -141,11 +173,14 @@ void un_fptr_init() {
 	fp_assign(fptr_table_undo, 'i', un_append);
 	fp_assign(fptr_table_undo, 'd', re_append);
 	fp_assign(fptr_table_undo, 'c', un_change);
+	fp_assign(fptr_table_undo, 'm', un_move);
+	fp_assign(fptr_table_undo, 'e', un_edit);
 	/* Redo */
 	fp_assign(fptr_table_redo, 'a', re_append);
 	fp_assign(fptr_table_redo, 'i', re_append);
 	fp_assign(fptr_table_redo, 'd', un_append);
 	fp_assign(fptr_table_redo, 'c', un_change);
+	fp_assign(fptr_table_redo, 'e', un_edit);
 }
 
 void push_to_append_buf(node_t *node) {

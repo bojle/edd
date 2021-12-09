@@ -21,6 +21,8 @@ int set_mark(node_t *node, int at);
 node_t *get_mark(int at);
 void clear_mark(int at);
 
+void edit_aux(char *rest);
+
 void ed_append(node_t *from, node_t *to, char *rest);
 void ed_print(node_t *from, node_t *to, char *rest);
 void ed_print_n(node_t *from, node_t *to, char *rest);

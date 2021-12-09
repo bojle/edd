@@ -20,9 +20,6 @@
  * 		ll_at(num)
  * 		ll_free()
  *
- * private:
- * 		ll_free_node(node)
- * 		ll_alloc_node(size)
  */ 
 
 /*
@@ -64,6 +61,7 @@ node_t *ll_remove_shallow(node_t *node);
 void ll_detach_node(node_t *node);
 /* Free the global list */
 void ll_free();
+void ll_free_node(node_t* node);
 
 /*
  * Lookup Functions 

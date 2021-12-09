@@ -28,5 +28,5 @@ io.o: io.c io.h ll.h err.h ed.h aux.h
 aux.o: aux.c aux.h err.h io.h ll.h
 	${cc} ${flags} -c aux.c 
 
-undo.o: undo.c undo.h ll.h parse.h aux.h err.h
+undo.o: undo.c undo.h ll.h parse.h aux.h err.h ed.h
 	${cc} ${flags} -c undo.c 
