@@ -181,8 +181,13 @@ char *parse_address(parse_t *pt, char *addr) {
 		}
 	}
 
-
-
+	if (!parse_defaults) {
+		int to_i = ll_node_index(pt->to);
+		int from_i = ll_node_index(pt->from);
+		if (to_i < from_i) {
+			err_normal(&to_repl, "Invalid Address... did you mean %d,%d?\n", to_i, from_i);
+		}
+	}
 	return addr;
 }
 

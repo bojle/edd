@@ -239,6 +239,10 @@ void ed_move(node_t *from, node_t *to, char *rest) {
 	push_to_undo_buf('m');
 	from = (from == global_head() ? ll_first_node() : from);
 
+	if (*rest == '\n') {
+		err_normal(&to_repl, "%s\n", "ERROR: No arguments");
+	}
+
 	parse_t *pt = pt_make();
 	parse_address(pt, rest);
 	node_t *move_to = pt_from(pt);
@@ -246,6 +250,10 @@ void ed_move(node_t *from, node_t *to, char *rest) {
 
 	move_to = (move_to == global_tail() ? ll_last_node(): move_to);
 	node_t *move_to_subsequent = ll_next(move_to, 1);
+
+	if (ll_node_index(move_to) <= ll_node_index(to)) {
+		err_normal(&to_repl, "%s\n", "Invalid Destination.");
+	}
 
 	push_to_append_buf(&brake);
 	push_to_append_buf(ll_prev(from, 1));
