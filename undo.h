@@ -6,7 +6,9 @@
 
 void un_fptr_init();
 void push_to_append_buf(node_t *node);
+node_t *pop_append_buf();
 void push_to_delete_buf(node_t *node);
+node_t *pop_delete_buf();
 void push_to_undo_buf(char c);
 void undo();
 void redo();

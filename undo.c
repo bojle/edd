@@ -211,6 +211,8 @@ void un_fptr_init() {
 	fp_assign(fptr_table_undo, 'm', un_move);
 	fp_assign(fptr_table_undo, 'e', un_edit);
 	fp_assign(fptr_table_undo, 'j', un_join);
+	fp_assign(fptr_table_undo, 'r', un_append);
+	fp_assign(fptr_table_undo, 't', un_append);
 	/* Redo */
 	fp_assign(fptr_table_redo, 'a', re_append);
 	fp_assign(fptr_table_redo, 'i', re_append);
@@ -218,10 +220,20 @@ void un_fptr_init() {
 	fp_assign(fptr_table_redo, 'c', un_change);
 	fp_assign(fptr_table_redo, 'e', un_edit);
 	fp_assign(fptr_table_redo, 'j', re_join);
+	fp_assign(fptr_table_redo, 'r', re_append);
+	fp_assign(fptr_table_redo, 't', re_append);
 }
 
 void push_to_append_buf(node_t *node) {
 	nb_push(&gbl_append_buf, node);
+}
+
+node_t *pop_delete_buf() {
+	return nb_pop(&gbl_delete_buf);
+}
+
+node_t *pop_append_buf() {
+	return nb_pop(&gbl_append_buf);
 }
 
 void push_to_delete_buf(node_t *node) {

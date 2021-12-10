@@ -390,6 +390,7 @@ void ed_quit_force(node_t *from, node_t *to, char *rest) {
 }
 
 void ed_read(node_t *from, node_t *to, char *rest) {
+	push_to_undo_buf('r');
 	FILE *fp;
 	_Bool frompipe = 0;
 	if (*rest == '!') {
@@ -405,8 +406,11 @@ void ed_read(node_t *from, node_t *to, char *rest) {
 	char *line = NULL;
 	size_t linecap;
 
+	from = (from == global_tail() ? ll_last_node() : from);
+	push_to_append_buf(&brake);
 	while (io_read_line(&line, &linecap, fp, NULL) > 0) {
 		from = ll_add_next(from, line);
+		push_to_append_buf(from);
 	}
 	free(line);
 	frompipe == 1 ? pclose(fp) : fclose(fp);
@@ -514,6 +518,7 @@ void ed_semicolon(node_t *from, node_t *to, char *rest) {
 }
 
 void ed_transfer(node_t *from, node_t *to, char *rest) {
+	push_to_undo_buf('t');
 	from = (from == global_head() ? ll_first_node() : from);
 	to = (to == global_tail() ? ll_last_node() : ll_next(to, 1));
 
@@ -525,9 +530,16 @@ void ed_transfer(node_t *from, node_t *to, char *rest) {
 	move_to = (move_to == global_tail() ? ll_last_node(): move_to);
 	//node_t *move_to_subsequent = ll_next(move_to, 1);
 
+	push_to_delete_buf(&brake);
+	push_to_append_buf(&brake);
 	while (from != to) {
-		move_to = ll_add_next(move_to, ll_s(from));
+		push_to_delete_buf(from);
+		push_to_append_buf(from);
 		from = ll_next(from, 1);
+	}
+
+	while ((from = pop_delete_buf()) != &brake) {
+		ll_add_next(move_to, ll_s(from));
 	}
 
 	gbl_saved = 0;
