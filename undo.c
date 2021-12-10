@@ -113,7 +113,7 @@ static void un_change() {
 	re_append();
 
 	/* Push contents of tmp_buf to delete_buf */
-	for (int i = 0; i < tmp_buf.nmemb; ++i) {
+	for (int i = 0; i < (int)tmp_buf.nmemb; ++i) {
 		push_to_delete_buf(nb_at(&tmp_buf, i));
 	}
 }
@@ -148,6 +148,41 @@ static void un_edit() {
 	ll_free_node(current);
 }
 
+static void un_join() {
+	node_t *c1, *c2;
+	/* cut is the size that needs to be cut from the 
+	 * rear end of the string.
+	 */
+	size_t cut = 0;
+	push_to_append_buf(&brake);
+	while ((c1 = nb_pop(&gbl_delete_buf)) != &brake) {
+		ll_attach_nodes(c1, ll_next(c1, 1));
+		ll_attach_nodes(ll_prev(c1, 1), c1);
+		push_to_append_buf(c1);
+		cut += ll_node_size(c1) - 1;
+		c2 = c1;
+	}
+	cut++;
+	c2 = ll_prev(c2, 1);
+	size_t sz = ll_node_size(c2);
+
+	/* cut is now the index at which a the newstring should end */
+	cut = sz - cut;
+	ll_cut_node(c2, cut); 
+}
+
+static void re_join() {
+	node_t *from, *to, *tmp;
+	from = nb_pop(&gbl_append_buf);
+	from = ll_prev(from, 1);
+	while ((tmp = nb_pop(&gbl_append_buf)) != &brake) {
+		to = tmp;
+	}
+	ed_join(from, to, NULL);
+	undo_pop(&gbl_undo_buf);
+}
+
+
 
 /********************************************************************\
 |* Function pointer type for functions of this type: void foo(void) *|
@@ -175,12 +210,14 @@ void un_fptr_init() {
 	fp_assign(fptr_table_undo, 'c', un_change);
 	fp_assign(fptr_table_undo, 'm', un_move);
 	fp_assign(fptr_table_undo, 'e', un_edit);
+	fp_assign(fptr_table_undo, 'j', un_join);
 	/* Redo */
 	fp_assign(fptr_table_redo, 'a', re_append);
 	fp_assign(fptr_table_redo, 'i', re_append);
 	fp_assign(fptr_table_redo, 'd', un_append);
 	fp_assign(fptr_table_redo, 'c', un_change);
 	fp_assign(fptr_table_redo, 'e', un_edit);
+	fp_assign(fptr_table_redo, 'j', re_join);
 }
 
 void push_to_append_buf(node_t *node) {

@@ -358,10 +358,14 @@ void ed_file(node_t *from, node_t *to, char *rest) {
 }
 
 void ed_join(node_t *from, node_t *to, char *rest) {
+	push_to_undo_buf('j');
+	push_to_delete_buf(&brake);
+
 	node_t *from_next = ll_next(from, 1);
 	to = (to == global_tail() ? to : ll_next(to, 1));
 
 	while (from_next != to) {
+		push_to_delete_buf(from_next);
 		ll_join_nodes(from, from_next);
 		from_next = ll_next(from, 1);
 	}

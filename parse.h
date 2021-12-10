@@ -42,7 +42,7 @@ extern char *gbl_commands;
 
 /* eval */
 
-#define FIRST_ASCII_CHAR '!'
+#define FIRST_ASCII_CHAR '\n'
 #define LAST_ASCII_CHAR 'z'
 /* Size of fptr_table; accomodates all the characters that could be a command */
 #define FPTR_ARRAY_SIZE (LAST_ASCII_CHAR - FIRST_ASCII_CHAR + 1) 

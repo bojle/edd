@@ -189,6 +189,7 @@ node_t *ll_at(int n) {
 node_t *ll_attach_nodes(node_t *n1, node_t *n2) {
 	n1->next = n2;
 	n2->prev = n1;
+	ll_set_current_node(n2);
 	return n2;
 }
 
@@ -242,9 +243,15 @@ node_t *ll_join_nodes(node_t *n1, node_t *n2) {
 	}
 	n1->size = new_sz;
 	strncat(n1->s, n2->s, n2->size);
-	ll_remove_node(n2);
+	ll_remove_shallow(n2);
 	ll_set_current_node(n1);
 	return n1;
+}
+
+node_t *ll_cut_node(node_t *n, int where) {
+	n->s[where] = '\n';
+	n->s[where + 1] = '\0';
+	n->size = where + 1;
 }
 
 int ll_node_index(node_t *node) {
