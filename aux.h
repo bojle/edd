@@ -31,6 +31,7 @@ void ds_free(ds_t *obj);
 char ds_pop(ds_t *ds);
 char ds_false_push(ds_t *ds);
 int ds_nmembs(ds_t *ds);
+void ds_clear(ds_t *ds);
 
 typedef struct yb_t yb_t;
 void yb_append(yb_t *yb, char *s);

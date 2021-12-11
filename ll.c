@@ -285,3 +285,11 @@ void ll_set_s(node_t *n, char *s) {
 void ll_detach_node(node_t *node) {
 	ll_attach_nodes(node->prev, node->next);
 }
+
+node_t *ll_make_shallow(char *s) {
+	node_t *newnode = ll_alloc_node(0);
+	newnode->prev = NULL;
+	newnode->next = NULL;
+	newnode->s = s;
+	return newnode;
+}

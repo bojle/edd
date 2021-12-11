@@ -338,14 +338,12 @@ void edit_aux(char *rest) {
 }
 
 void ed_edit(node_t *from, node_t *to, char *rest) {
-	push_to_undo_buf('e');
-	push_to_delete_buf(&brake);
-	push_to_delete_buf(ll_make_node(NULL, get_default_filename(), NULL));
-
 	if (!gbl_saved) {
 		err_normal(&to_repl, "%s", 
 				"No write since last change. Use 'E' to override or save changes.\n");
 	}
+
+	reset_undo();
 	edit_aux(rest);
 	gbl_saved = 1;
 }
@@ -536,18 +534,16 @@ void ed_transfer(node_t *from, node_t *to, char *rest) {
 	free(pt);
 
 	move_to = (move_to == global_tail() ? ll_last_node(): move_to);
-	//node_t *move_to_subsequent = ll_next(move_to, 1);
 
 	push_to_delete_buf(&brake);
-	push_to_append_buf(&brake);
 	while (from != to) {
 		push_to_delete_buf(from);
-		push_to_append_buf(from);
 		from = ll_next(from, 1);
 	}
 
+	push_to_append_buf(&brake);
 	while ((from = pop_delete_buf()) != &brake) {
-		ll_add_next(move_to, ll_s(from));
+		push_to_append_buf(ll_add_next(move_to, ll_s(from)));
 	}
 
 	gbl_saved = 0;
@@ -589,12 +585,16 @@ void ed_paste(node_t *from, node_t *to, char *rest) {
 int gbl_total_substitutions = 0;
 
 void ed_subs(node_t *from, node_t *to, char *rest) {
+	push_to_undo_buf('s');
+
 	if (parse_defaults) {
 		from = ll_first_node();
 		to = ll_last_node();
 	}
 	from = (from == global_head() ? ll_first_node() : from);
 	to = (to == global_tail() ? to : ll_next(to, 1));
+
+	node_t *new;
 
 	char *subst;
 	char *tail;
@@ -615,10 +615,20 @@ void ed_subs(node_t *from, node_t *to, char *rest) {
 
 	parse_regex(gbl_re, regex);
 	parse_tail(gbl_re, tail);
+
 end:
+	//copy = ll_prev(from, 1);
+	push_to_delete_buf(&brake);
+	push_to_append_buf(&brake);
 	while (from != to) {
-		ll_set_s(from, re_replace(gbl_re, ll_s(from), subst));
-		from = ll_next(from, 1);
+		push_to_delete_buf(from);
+
+		new = ll_make_shallow(re_replace(gbl_re, ll_s(from), subst));
+		ll_attach_nodes(ll_prev(from, 1), new);
+		ll_attach_nodes(new, ll_next(from, 1));
+
+		push_to_append_buf(from);
+		from = ll_next(new, 1);
 	}
 	gbl_saved = 0;
 }

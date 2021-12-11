@@ -1,4 +1,5 @@
 #include "undo.h"
+#include <stdio.h>
 #include "ll.h"
 #include "parse.h"
 #include "aux.h"
@@ -20,6 +21,8 @@ typedef struct node_buf {
 
 static nb_t gbl_append_buf;
 static nb_t gbl_delete_buf;
+static nb_t gbl_redo_append;
+static nb_t gbl_redo_delete;
 
 static void nb_push(nb_t *nb, node_t *node) {
 	if (node == NULL) {
@@ -71,25 +74,44 @@ char undo_pop(undo_t *u) {
 	return ds_pop(u->buf);
 }
 
-
 /* un_ functions */
 
 static void un_append() {
 	node_t *current;
-	push_to_delete_buf(&brake);
+	nb_push(&gbl_redo_delete, &brake);
 	while ((current = nb_pop(&gbl_append_buf)) != &brake) {
 		ll_detach_node(current);
-		push_to_delete_buf(current);
+		nb_push(&gbl_redo_delete, current);
 	}
 }
 
 static void re_append() {
 	node_t *current;
 	push_to_append_buf(&brake);
-	while ((current = nb_pop(&gbl_delete_buf)) != &brake) {
+	while ((current = nb_pop(&gbl_redo_delete)) != &brake) {
 		ll_attach_nodes(current, ll_next(current, 1));
 		ll_attach_nodes(ll_prev(current, 1), current);
 		push_to_append_buf(current);
+	}
+}
+
+static void un_delete() {
+	node_t *current;
+	nb_push(&gbl_redo_append, &brake);
+	while ((current = nb_pop(&gbl_delete_buf)) != &brake) {
+		ll_attach_nodes(current, ll_next(current, 1));
+		ll_attach_nodes(ll_prev(current, 1), current);
+		nb_push(&gbl_redo_append, current);
+	}
+}
+
+/* redo_append to delete */
+static void re_delete() {
+	node_t *current;
+	push_to_delete_buf(&brake);
+	while ((current = nb_pop(&gbl_redo_append)) != &brake) {
+		ll_detach_node(current);
+		push_to_delete_buf(current);
 	}
 }
 
@@ -99,6 +121,7 @@ static void re_append() {
  * insert of what was deleted
  */
 static void un_change() {
+#if 0
 	nb_t tmp_buf = { .sz = 0, .nmemb = 0, .initialized = 0 };
 	node_t *current;
 
@@ -116,6 +139,14 @@ static void un_change() {
 	for (int i = 0; i < (int)tmp_buf.nmemb; ++i) {
 		push_to_delete_buf(nb_at(&tmp_buf, i));
 	}
+#endif
+	un_append();
+	un_delete();
+}
+
+static void re_change() {
+	re_delete();
+	re_append();
 }
 
 static void un_move() {
@@ -132,13 +163,42 @@ static void un_move() {
 	ll_attach_nodes(from_prev, from);
 	ll_attach_nodes(to, to_next);
 	ll_attach_nodes(move_to, move_to_subsequent);
+
+	nb_push(&gbl_redo_append, &brake);
+	nb_push(&gbl_redo_append, from_prev);
+	nb_push(&gbl_redo_append, from);
+	nb_push(&gbl_redo_append, to);
+	nb_push(&gbl_redo_append, to_next);
+	nb_push(&gbl_redo_append, move_to);
+	nb_push(&gbl_redo_append, move_to_subsequent);
 }
 
 static void re_move() {
-	// TODO
+	node_t *move_to_subsequent = nb_pop(&gbl_redo_append);
+	node_t *move_to = nb_pop(&gbl_redo_append);
+	node_t *to_next = nb_pop(&gbl_redo_append);
+	node_t *to = nb_pop(&gbl_redo_append);
+	node_t *from = nb_pop(&gbl_redo_append);
+	node_t *from_prev = nb_pop(&gbl_redo_append);
+	/* Pop the brakes off */
+	nb_pop(&gbl_redo_append);
+
+	ll_attach_nodes(from_prev, to_next);
+	ll_attach_nodes(move_to, from);
+	ll_attach_nodes(to, move_to_subsequent);	
+
+	push_to_append_buf(&brake);
+	push_to_append_buf(from_prev);
+	push_to_append_buf(from);
+	push_to_append_buf(to);
+	push_to_append_buf(to_next);
+	push_to_append_buf(move_to);
+	push_to_append_buf(move_to_subsequent);
 }
 
 
+
+#if 0
 static void un_edit() {
 	node_t *current = nb_pop(&gbl_delete_buf);
 	nb_pop(&gbl_delete_buf);
@@ -147,6 +207,7 @@ static void un_edit() {
 	undo_pop(&gbl_undo_buf);
 	ll_free_node(current);
 }
+#endif
 
 static void un_join() {
 	node_t *c1, *c2;
@@ -154,11 +215,11 @@ static void un_join() {
 	 * rear end of the string.
 	 */
 	size_t cut = 0;
-	push_to_append_buf(&brake);
+	nb_push(&gbl_redo_append, &brake);
 	while ((c1 = nb_pop(&gbl_delete_buf)) != &brake) {
 		ll_attach_nodes(c1, ll_next(c1, 1));
 		ll_attach_nodes(ll_prev(c1, 1), c1);
-		push_to_append_buf(c1);
+		nb_push(&gbl_redo_append, c1);
 		cut += ll_node_size(c1) - 1;
 		c2 = c1;
 	}
@@ -173,15 +234,55 @@ static void un_join() {
 
 static void re_join() {
 	node_t *from, *to, *tmp;
-	from = nb_pop(&gbl_append_buf);
+	from = nb_pop(&gbl_redo_append);
 	from = ll_prev(from, 1);
-	while ((tmp = nb_pop(&gbl_append_buf)) != &brake) {
+	while ((tmp = nb_pop(&gbl_redo_append)) != &brake) {
 		to = tmp;
 	}
 	ed_join(from, to, NULL);
 	undo_pop(&gbl_undo_buf);
 }
 
+#if 0
+static void nb_print(nb_t *nb) {
+	for (int i = 0; i < nb->nmemb; ++i) {
+		if (nb->nb[i] == &brake) {
+			printf("[brake]\n");
+		}
+		else {
+			printf("%s", ll_s(nb->nb[i]));
+		}
+	}
+}
+#endif
+
+static void un_subs() {
+	node_t *old, *new;
+	nb_push(&gbl_redo_append, &brake);
+	nb_push(&gbl_redo_delete, &brake);
+	while (((old = nb_pop(&gbl_delete_buf)) != &brake) &&
+			((new = nb_pop(&gbl_append_buf)) != &brake)) {
+		ll_attach_nodes(ll_prev(new, 1), old);
+		ll_attach_nodes(old, ll_next(new, 1));
+		nb_push(&gbl_redo_append, old);
+		nb_push(&gbl_redo_delete, new);
+	}
+	nb_pop(&gbl_append_buf);
+}
+
+static void re_subs() {
+	node_t *old, *new;
+	push_to_append_buf(&brake);
+	push_to_delete_buf(&brake);
+	while (((old = nb_pop(&gbl_redo_delete)) != &brake) &&
+			((new = nb_pop(&gbl_redo_append)) != &brake)) {
+		ll_attach_nodes(ll_prev(new, 1), old);
+		ll_attach_nodes(old, ll_next(new, 1));
+		push_to_append_buf(old);
+		push_to_delete_buf(new);
+	}
+	nb_pop(&gbl_redo_append);
+}
 
 
 /********************************************************************\
@@ -206,22 +307,23 @@ void un_fptr_init() {
 	/* Undo */
 	fp_assign(fptr_table_undo, 'a', un_append);
 	fp_assign(fptr_table_undo, 'i', un_append);
-	fp_assign(fptr_table_undo, 'd', re_append);
+	fp_assign(fptr_table_undo, 'd', un_delete);
 	fp_assign(fptr_table_undo, 'c', un_change);
 	fp_assign(fptr_table_undo, 'm', un_move);
-	fp_assign(fptr_table_undo, 'e', un_edit);
 	fp_assign(fptr_table_undo, 'j', un_join);
 	fp_assign(fptr_table_undo, 'r', un_append);
 	fp_assign(fptr_table_undo, 't', un_append);
+	fp_assign(fptr_table_undo, 's', un_subs);
 	/* Redo */
 	fp_assign(fptr_table_redo, 'a', re_append);
 	fp_assign(fptr_table_redo, 'i', re_append);
-	fp_assign(fptr_table_redo, 'd', un_append);
-	fp_assign(fptr_table_redo, 'c', un_change);
-	fp_assign(fptr_table_redo, 'e', un_edit);
+	fp_assign(fptr_table_redo, 'd', re_delete);
+	fp_assign(fptr_table_redo, 'c', re_change);
+	fp_assign(fptr_table_redo, 'm', re_move);
 	fp_assign(fptr_table_redo, 'j', re_join);
 	fp_assign(fptr_table_redo, 'r', re_append);
 	fp_assign(fptr_table_redo, 't', re_append);
+	fp_assign(fptr_table_redo, 's', re_subs);
 }
 
 void push_to_append_buf(node_t *node) {
@@ -242,6 +344,11 @@ void push_to_delete_buf(node_t *node) {
 
 void push_to_undo_buf(char c) {
 	undo_push(&gbl_undo_buf, c);
+}
+
+void reset_undo() {
+	gbl_undo_buf.undo_count = 0;
+	ds_clear(gbl_undo_buf.buf);
 }
 
 void undo() {
