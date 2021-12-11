@@ -11,7 +11,7 @@ void push_to_delete_buf(node_t *node);
 node_t *pop_delete_buf();
 void push_to_undo_buf(char c);
 void reset_undo();
-void undo();
-void redo();
+char undo();
+char redo();
 
 #endif

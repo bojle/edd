@@ -7,6 +7,16 @@
 #include "ed.h"
 #include <stdlib.h>
 
+
+typedef void (*fptr_t) (void);
+
+static fptr_t fptr_table_undo[FPTR_ARRAY_SIZE];
+static fptr_t fptr_table_redo[FPTR_ARRAY_SIZE];
+
+static int fp_hash(char c) {
+	return c - FIRST_ASCII_CHAR;
+}
+
 /* UNDO */
 
 /* Buffers */
@@ -284,19 +294,28 @@ static void re_subs() {
 	nb_pop(&gbl_redo_append);
 }
 
+static void un_global() {
+	char c;
+	while ((c = undo_pop(&gbl_undo_buf)) != 'g') {
+		fptr_table_undo[fp_hash(c)]();
+		gbl_undo_buf.undo_count++;
+	}
+}
+
+static void re_global() {
+	char c;
+	while ((c = ds_false_push(gbl_undo_buf.buf)) != 'g') {
+		fptr_table_redo[fp_hash(c)]();
+		gbl_undo_buf.undo_count--;
+	}
+}
+
 
 /********************************************************************\
 |* Function pointer type for functions of this type: void foo(void) *|
 \********************************************************************/
 
-typedef void (*fptr_t) (void);
 
-static fptr_t fptr_table_undo[FPTR_ARRAY_SIZE];
-static fptr_t fptr_table_redo[FPTR_ARRAY_SIZE];
-
-static int fp_hash(char c) {
-	return c - FIRST_ASCII_CHAR;
-}
 
 static void fp_assign(fptr_t *table, char c, fptr_t fn) {
 	table[fp_hash(c)] = fn;
@@ -314,6 +333,7 @@ void un_fptr_init() {
 	fp_assign(fptr_table_undo, 'r', un_append);
 	fp_assign(fptr_table_undo, 't', un_append);
 	fp_assign(fptr_table_undo, 's', un_subs);
+	fp_assign(fptr_table_undo, 'g', un_global);
 	/* Redo */
 	fp_assign(fptr_table_redo, 'a', re_append);
 	fp_assign(fptr_table_redo, 'i', re_append);
@@ -324,6 +344,7 @@ void un_fptr_init() {
 	fp_assign(fptr_table_redo, 'r', re_append);
 	fp_assign(fptr_table_redo, 't', re_append);
 	fp_assign(fptr_table_redo, 's', re_subs);
+	fp_assign(fptr_table_redo, 'g', re_global);
 }
 
 void push_to_append_buf(node_t *node) {
@@ -351,17 +372,18 @@ void reset_undo() {
 	ds_clear(gbl_undo_buf.buf);
 }
 
-void undo() {
+char undo() {
 	char c = undo_pop(&gbl_undo_buf);
 	if (c == '\0') {
 		err_normal(&to_repl, "%s\n", "Already at the latest change.");
 	}
 	fptr_table_undo[fp_hash(c)]();
 	gbl_undo_buf.undo_count++;
+	return c;
 }
 
 /* redo = undo + 1 */
-void redo() {
+char redo() {
 	if (gbl_undo_buf.undo_count == 0) {
 		err_normal(&to_repl, "%s\n", "Nothing to redo.");
 	}
@@ -371,5 +393,6 @@ void redo() {
 	}
 	fptr_table_redo[fp_hash(c)]();
 	gbl_undo_buf.undo_count--;
+	return c;
 }
 

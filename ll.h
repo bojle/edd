@@ -63,7 +63,7 @@ void ll_detach_node(node_t *node);
 /* Free the global list */
 void ll_free();
 void ll_free_node(node_t* node);
-node_t *ll_cut_node(node_t *n, int where);
+void ll_cut_node(node_t *n, int where);
 
 /*
  * Lookup Functions 

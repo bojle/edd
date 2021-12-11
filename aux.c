@@ -7,6 +7,7 @@
 #include "io.h"
 #include "ll.h"
 #include "parse.h"
+#include "undo.h"
 
 #define REPLIM 200
 
@@ -468,15 +469,26 @@ void execute_command_list(yb_t *yb, node_t *from) {
 			}
 			else {
 				if (current_cmd == 'i') {
+					push_to_undo_buf('i');
 					from = ll_prev(from, 1);
 				}
 				else if (current_cmd == 'c') {
-					from = ll_remove_node(from);
+					push_to_undo_buf('c');
+					from = ll_remove_shallow(from);
+					push_to_delete_buf(&brake);
+					push_to_delete_buf(from);
 					from = ll_prev(from, 1);
 				}
+				else if (current_cmd == 'a') {
+					push_to_undo_buf('a');
+				}
 
-				for (i += 1; yb_at(yb, i)[0] != '.' && i < (int)yb->nmemb; ++i) {
-					ll_add_next(from, yb_at(yb, i));
+				push_to_append_buf(&brake);
+				for (i += 1; i < (int)yb->nmemb; ++i) {
+					if (yb_at(yb, i)[0] == '.') {
+						break;
+					}
+					push_to_append_buf(ll_add_next(from, yb_at(yb, i)));
 					from = ll_next(from, 1);
 				}
 			}

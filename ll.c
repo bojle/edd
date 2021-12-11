@@ -248,7 +248,7 @@ node_t *ll_join_nodes(node_t *n1, node_t *n2) {
 	return n1;
 }
 
-node_t *ll_cut_node(node_t *n, int where) {
+void ll_cut_node(node_t *n, int where) {
 	n->s[where] = '\n';
 	n->s[where + 1] = '\0';
 	n->size = where + 1;
