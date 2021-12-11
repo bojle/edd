@@ -1,26 +1,105 @@
-#include "undo.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include "undo.h"
 #include "ll.h"
 #include "parse.h"
 #include "aux.h"
 #include "err.h"
 #include "ed.h"
-#include <stdlib.h>
+
+/*
+ *  DATA BUFFERS
+ *
+ * 		gbl_append_buf, gbl_delete_buf (collectively called append buffers).
+ * 		gbl_redo_append,gbl_redo_delete (redo buffers)
+ * 		gbl_undo_buf (undo buffer)
+ *
+ * 	TERMS
+ *
+ * 	~ Buffers: "Lenient stacks". Lenient because because their stack properties 
+ * 	aren't strictly adhered to. Many functions randomly access the "buffer" 
+ * 	and the stack itself has helper functions that flagrantly violate the 
+ * 	"stack data structure". For example, a 'false push' function that pushes 
+ * 	nothing but increments the internal counter.
+ *
+ *  ~ The global list: or "global active list" or "active list" is all the 
+ *  nodes that can be reached by starting from gbl_head_node or gbl_tail_node
+ *  (defined in ll.c). In other words, a global list is all the nodes between
+ *  gbl_head_node or gbl_tail_node.
+ *
+ *
+ * 	HOW 'UNDO' WORKS
+ *
+ * 	Undos and Redos are generative, in that, a previous state is generated, 
+ * 	not remembered. Undo takes an action, like 'append', inverts it, and 
+ * 	carries out the inverted action. Redo, on the other hand is simply the 
+ * 	'action' with no modifications.
+ *
+ * 	HOW 'UNDO' IS IMPLEMENTED
+ *
+ * 	1. All ed_ functions (for which an 'undo' operation makes sense) register 
+ * 	themselves by pushing a character (which is the name of the
+ * 	command they correspond to) to gbl_undo_buf (the undo stack).
+ *
+ * 	2. All ed_ functions push the data that they modified to the append
+ * 	buffers. 
+ *
+ * 	3. All un_ functions pop data from the append buffers, and push them 
+ * 	to the redo buffers.
+ *
+ * 	4. All re_ functions pop data from the redo buffers and push them to 
+ *  the append buffers.
+ *
+ * 	5. undo() pops a character from the undo stack, looks up a table for an
+ * 	un_ function corresponding that character and calls it. 
+ *
+ * 	6. undo() does not deletes a character from memory when it pops it; it
+ * 	simply decrements the index, creating an illusion of a pop. This is done
+ * 	so redo() can work. 
+ *
+ * 	7. redo() "looks ahead" in the undo buffer to see the latest action that
+ * 	was undone, looks up a table for a re_ function corresponding that 
+ * 	action and calls it.
+ *
+ *  8. An un_ function (nearly every ed_ function eligible for undo has one) 
+ *  is an "inverter". An "append" action, for example, can be inverted (or undone)
+ *  by a "delete" of whatever was appended.
+ *
+ *  9. A re_ function, superficially, is equivalent to an ed_ function. The 
+ *  difference lies in the buffers that these functions read and update. ed_
+ *  functions predominantly read from the user and write to append buffers,
+ *  while re_ functions read from append buffers and write
+ *  to redo buffers.
+ *
+ *  10. At any time, these invariants hold true:
+ *  	- gbl_append_buf and gbl_redo_append point only to nodes in the active 
+ *  	list.
+ *  	- gbl_delete_buf and gbl_redo_delete point only to nodes NOT in the
+ *  	active list.
+ *  	- ed_ functions only push to gbl_append_buf or gbl_delete_buf.
+ *  	- un_ functions only push to gbl_redo_append or gbl_redo_delete.
+ *  	- re_ functions only push to gbl_append_buf or gbl_delete_buf.
+ *
+ */
 
 
+/* Function pointer template */
 typedef void (*fptr_t) (void);
 
+/* Used by undo() */
 static fptr_t fptr_table_undo[FPTR_ARRAY_SIZE];
+/* Used by redo() */
 static fptr_t fptr_table_redo[FPTR_ARRAY_SIZE];
 
 static int fp_hash(char c) {
 	return c - FIRST_ASCII_CHAR;
 }
 
-/* UNDO */
+static void fp_assign(fptr_t *table, char c, fptr_t fn) {
+	table[fp_hash(c)] = fn;
+}
 
-/* Buffers */
-
+/* node buffers */
 
 typedef struct node_buf {
 	node_t **nb;
@@ -71,6 +150,7 @@ static void nb_free(nb_t *nb) {
 
 typedef struct undo_t {
 	ds_t *buf;
+	/* how many undos has there been */
 	size_t undo_count;
 } undo_t;
 
@@ -84,7 +164,9 @@ char undo_pop(undo_t *u) {
 	return ds_pop(u->buf);
 }
 
-/* un_ functions */
+/*******************************************************************
+ * 						un_ and re_ functions                      *
+ *******************************************************************/
 
 static void un_append() {
 	node_t *current;
@@ -131,25 +213,6 @@ static void re_delete() {
  * insert of what was deleted
  */
 static void un_change() {
-#if 0
-	nb_t tmp_buf = { .sz = 0, .nmemb = 0, .initialized = 0 };
-	node_t *current;
-
-	/* Delete what was inserted */
-	nb_push(&tmp_buf, &brake);
-	while ((current = nb_pop(&gbl_append_buf)) != &brake) {
-		ll_detach_node(current);
-		nb_push(&tmp_buf, current);
-	}
-
-	/* Insert what was deleted */
-	re_append();
-
-	/* Push contents of tmp_buf to delete_buf */
-	for (int i = 0; i < (int)tmp_buf.nmemb; ++i) {
-		push_to_delete_buf(nb_at(&tmp_buf, i));
-	}
-#endif
 	un_append();
 	un_delete();
 }
@@ -206,19 +269,6 @@ static void re_move() {
 	push_to_append_buf(move_to_subsequent);
 }
 
-
-
-#if 0
-static void un_edit() {
-	node_t *current = nb_pop(&gbl_delete_buf);
-	nb_pop(&gbl_delete_buf);
-	char *filename = ll_s(current);
-	ed_edit(NULL, NULL, filename);
-	undo_pop(&gbl_undo_buf);
-	ll_free_node(current);
-}
-#endif
-
 static void un_join() {
 	node_t *c1, *c2;
 	/* cut is the size that needs to be cut from the 
@@ -237,7 +287,7 @@ static void un_join() {
 	c2 = ll_prev(c2, 1);
 	size_t sz = ll_node_size(c2);
 
-	/* cut is now the index at which a the newstring should end */
+	/* cut is now the index at which the newstring should end */
 	cut = sz - cut;
 	ll_cut_node(c2, cut); 
 }
@@ -252,19 +302,6 @@ static void re_join() {
 	ed_join(from, to, NULL);
 	undo_pop(&gbl_undo_buf);
 }
-
-#if 0
-static void nb_print(nb_t *nb) {
-	for (int i = 0; i < nb->nmemb; ++i) {
-		if (nb->nb[i] == &brake) {
-			printf("[brake]\n");
-		}
-		else {
-			printf("%s", ll_s(nb->nb[i]));
-		}
-	}
-}
-#endif
 
 static void un_subs() {
 	node_t *old, *new;
@@ -310,17 +347,12 @@ static void re_global() {
 	}
 }
 
+/***************************************************************/
 
-/********************************************************************\
-|* Function pointer type for functions of this type: void foo(void) *|
-\********************************************************************/
-
-
-
-static void fp_assign(fptr_t *table, char c, fptr_t fn) {
-	table[fp_hash(c)] = fn;
-}
-
+/* 
+ * Called once by main(), initializes fptr_table_undo and
+ * fptr_table_redo 
+ */
 void un_fptr_init() {
 	gbl_undo_buf.buf = ds_make();
 	/* Undo */
@@ -395,4 +427,3 @@ char redo() {
 	gbl_undo_buf.undo_count--;
 	return c;
 }
-
