@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <unistd.h>
 
 #include "io.h"
 #include "ll.h"
@@ -70,26 +71,73 @@ char *parse_filename(char *filename) {
 
 
 FILE *fileopen(char *filename, char *mode) {
-	size_t sz = strlen(filename);
-	if (filename[sz - 1] == '\n') {
-		filename[sz - 1] = '\0';
-	}
+	remove_trailing_newlines(filename);
 	FILE *fp = fopen(filename, mode);
-
-	if (fp == NULL) {
-		err_normal(&to_repl, "%s: %s\n", strerror(errno), filename);
-	}
 	return fp;
 }
 
 FILE *shopen(char *cmd, char *mode) {
-	size_t sz = strlen(cmd);
-	if (cmd[sz - 1] == '\n') {
-		cmd[sz - 1] = '\0';
-	}
+	remove_trailing_newlines(cmd);
 	FILE *fp = popen(cmd, mode);
-	if (fp == NULL) {
-		err(NULL, strerror(errno));
-	}
 	return fp;
+}
+
+/*
+ * ARGPARSE
+ */
+
+static const char *options_text = "Usage: edd [OPTIONS] [FILE]\n\n"
+"Options:\n"
+"-h       \tPrint this help message and exit\n"
+"-E       \tUse \"Extended Regular Expressions\"\n"
+"-p STRING\tSet interactive prompt to STRING\n"
+"-r       \tRun edd in restricted mode\n"
+"-s       \tSilent error messages and diagnostics";
+
+static const char *more_information = "Try 'edd -h' for more information";
+
+
+
+void options() {
+	io_write_line(stdout, "%s\n", options_text);
+}
+
+_Bool opt_restricted = 0;
+_Bool opt_silent = 0;
+_Bool opt_extended = 0;
+
+static const char *optstring = "hEp:rs";
+
+int parse_args(int argc, char **argv) {
+#if 0
+	if (argc < 2) {
+		io_write_line(stderr, "Too few arguments\n%s\n", more_information);
+		exit(EXIT_FAILURE);
+	}
+#endif
+	int opt;
+	while ((opt = getopt(argc, argv, optstring)) != -1) {
+		switch (opt) {
+			case 'h':
+				options();
+				exit(EXIT_SUCCESS);
+				break;
+			case 'E':
+				opt_extended = 1;
+				break;
+			case 'p':
+				set_prompt(optarg);
+				break;
+			case 'r':
+				opt_restricted = 1;
+				break;
+			case 's':
+				opt_silent = 1;
+				break;
+			case '?':
+				io_write_line(stderr, "Invalid Option: %c\n%s\n", optopt, more_information);
+				exit(EXIT_FAILURE);
+		}
+	}
+	return optind;
 }

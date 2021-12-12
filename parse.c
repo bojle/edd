@@ -10,6 +10,7 @@
 #include <string.h>
 #include "aux.h"
 #include "undo.h"
+#include "io.h"
 
 
 /* 
@@ -272,17 +273,27 @@ void fptr_init() {
 	fp_assign('U', ed_redo);
 }
 	
-char *gbl_commands = "apndcmPif!eEjqQrkwW=#;tyxsgGvVuU\n";
+char *gbl_commands = "adcmijrwWtxsgGvVuUpn\nPf!eEjqQk=#;y";
+char *gbl_restricted_commands = "adcmijrwWtxsgGvVuU";
 
 void eval(parse_t *pt) {
+#if 0
 	printf("node from: %s", ll_s(pt->from));
 	printf("node to: %s", ll_s(pt->to));
 	printf("command : %c\n", pt->command);
 	printf("arguments : %s\n", pt->argument);
 	printf("size: %ld\n", ll_node_size(pt->from));
-
+#endif 
 	if (strchr(gbl_commands, pt->command) == NULL) {
-		err_normal(&to_repl, "%s: %c\n", "Invalid Command", pt->command);
+		if (opt_restricted) {
+			if (strchr(gbl_restricted_commands, pt->command) != NULL) {
+				err_normal(&to_repl, "%s: %c\n", "Can't run command '%c' in"
+					   " restricted mode", pt->command);
+			}
+		}
+		else {
+			err_normal(&to_repl, "%s: %c\n", "Invalid Command", pt->command);
+		}
 	}
 	fptr_table[fp_hash(pt->command)](pt->from, pt->to, pt->argument);
 }

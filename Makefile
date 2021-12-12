@@ -1,8 +1,8 @@
 cc=gcc
 flags=-Wall -pedantic -Wextra -g -Wno-unused-parameter
 ldlibs=
-exe=d
-objects= main.o ll.o parse.o io.o ed.o err.o aux.o undo.o
+exe=edd
+objects= main.o ll.o parse.o io.o ed.o err.o aux.o undo.o 
 
 ${exe}: ${objects}
 	${cc} ${flags} -o $@ $^ ${ldlibs}
@@ -19,7 +19,7 @@ err.o: err.c err.h
 ed.o: ed.c ed.h ll.h io.h aux.h parse.h
 	${cc} ${flags} -c ed.c 
 
-parse.o: parse.c parse.h ll.h aux.h undo.h
+parse.o: parse.c parse.h ll.h aux.h undo.h io.h
 	${cc} ${flags} -c parse.c 
 
 io.o: io.c io.h ll.h err.h ed.h aux.h

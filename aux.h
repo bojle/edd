@@ -6,7 +6,7 @@
 #include "ll.h"
 
 char *skipspaces(char *s);
-char *strrep(char *str, regex_t *rep, char *with, _Bool matchall);
+char *remove_trailing_newlines(char *s);
 char *regerror_aux(int errcode, regex_t *reg);
 
 /* Dynamic Strings */

@@ -129,20 +129,27 @@ static void nb_push(nb_t *nb, node_t *node) {
 	nb->nmemb++;
 }
 
+#if 0
 static node_t *nb_top(nb_t *nb) {
 	return nb->nb[nb->nmemb - 1];
 }
+#endif
 
 static node_t *nb_pop(nb_t *nb) {
 	nb->nmemb--;
 	return nb->nb[nb->nmemb];
 }
 
+#if 0
 static node_t *nb_at(nb_t *nb, int i) {
 	return nb->nb[i];
 }
+#endif
 
 static void nb_free(nb_t *nb) {
+	if (nb->nb == NULL) {
+		return;
+	}
 	free(nb->nb);
 }
 
@@ -355,6 +362,7 @@ static void re_global() {
  */
 void un_fptr_init() {
 	gbl_undo_buf.buf = ds_make();
+	atexit(undo_buffers_free);
 	/* Undo */
 	fp_assign(fptr_table_undo, 'a', un_append);
 	fp_assign(fptr_table_undo, 'i', un_append);
@@ -402,6 +410,14 @@ void push_to_undo_buf(char c) {
 void reset_undo() {
 	gbl_undo_buf.undo_count = 0;
 	ds_clear(gbl_undo_buf.buf);
+}
+
+void undo_buffers_free() {
+	nb_free(&gbl_append_buf);
+	nb_free(&gbl_delete_buf);
+	nb_free(&gbl_redo_append);
+	nb_free(&gbl_redo_delete);
+	ds_free(gbl_undo_buf.buf);
 }
 
 char undo() {

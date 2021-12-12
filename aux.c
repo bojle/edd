@@ -1,8 +1,8 @@
-#include "aux.h"
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "aux.h"
 #include "err.h"
 #include "io.h"
 #include "ll.h"
@@ -16,6 +16,20 @@ char *skipspaces(char *s) {
 		return s;
 	while (isspace(*s))
 		s++;
+	return s;
+}
+
+char *remove_trailing_newlines(char *s) {
+	char *e = s + strlen(s) - 1;
+	while (e > s) {
+		if (*e != '\n') {
+			return s;
+		}
+		else if (*e == '\n') {
+			*e = '\0';
+		}
+		e--;
+	}
 	return s;
 }
 
@@ -69,6 +83,9 @@ char ds_at(ds_t *obj, int n) {
 
 
 void ds_free(ds_t *obj) {
+	if (obj->s == NULL) {
+		return;
+	}
 	free(obj->s);
 }
 
@@ -226,7 +243,7 @@ void parse_regex(re_t *re, char *exp) {
 		return;
 	}
 	int err;
-	if ((err = regcomp(&re->re, exp, REG_EXTENDED)) != 0) {
+	if ((err = regcomp(&re->re, exp, (opt_extended ? REG_EXTENDED : 0))) != 0) {
 		err_normal(&to_repl, "%s\n", regerror_aux(err, &re->re));
 	}
 }
@@ -414,7 +431,7 @@ char *parse_global_command(regex_t *reg, char *exp) {
 	exp = skipspaces(exp);
 
 	int err;
-	if ((err = regcomp(reg, regex, REG_EXTENDED)) != 0) {
+	if ((err = regcomp(reg, regex, (opt_extended ? REG_EXTENDED : 0))) != 0) {
 		err(&to_repl, regerror_aux(err, reg));
 	}
 	return exp;

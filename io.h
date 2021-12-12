@@ -16,4 +16,16 @@ ssize_t io_read_line(char **line, size_t *linecap, FILE *fp, char *prompt);
 /* printf() wrapper */
 int io_write_line(FILE *fp, const char *fmt, ...);
 
+/* args */
+
+extern _Bool opt_restricted;
+extern _Bool opt_silent;
+extern _Bool opt_extended;
+
+/* 
+ * returns optind i.e. index of the first argument
+ * in argv that is not an option
+ */
+int parse_args(int argc, char **argv);
+
 #endif

@@ -12,10 +12,10 @@
 #include "undo.h"
 
 #define ED_PROMPT_SIZE 64
-static char gbl_prompt[ED_PROMPT_SIZE] = ":";
+static char gbl_prompt[ED_PROMPT_SIZE];
 
 #define ED_DEFAULT_FILENAME_SIZE 4096
-static char gbl_default_filename[ED_DEFAULT_FILENAME_SIZE] = "man.txt";
+static char gbl_default_filename[ED_DEFAULT_FILENAME_SIZE];
 
 static _Bool gbl_saved = 1;
 
@@ -69,11 +69,18 @@ void set_command_buf(char *cmd) {
 	ds_set(gbl_command_buf, cmd);
 }
 
+void append_command_buf(char *s) {
+	while (*s) {
+		ds_append(gbl_command_buf, *s++);
+	}
+}
+
 char *get_command_buf() {
 	return ds_get_s(gbl_command_buf);
 }
 
 void gbl_buffers_init() {
+	atexit(gbl_buffers_free);
 	gbl_command_buf = ds_make();
 	gbl_yank_buf = yb_make();
 	gbl_re = re_make();
@@ -141,7 +148,6 @@ void clear_mark(int at) {
 /* ed_ functions */
 
 static size_t append_aux(node_t *from) {
-	from = (from == global_tail() ? ll_last_node() : from);
 	char *line = NULL;
 	size_t bytes = 0;
 	size_t lines = 0;
@@ -162,6 +168,7 @@ static size_t append_aux(node_t *from) {
 
 void ed_append(node_t *from, node_t *to, char *rest) {
 	push_to_undo_buf('a');
+	from = (from == global_tail() ? ll_last_node() : from);
 	size_t lines = append_aux(from);
 	io_write_line(stdout, "%ld line%s appended\n", lines, (lines==1)?"":"s");
 	gbl_saved = 0;
@@ -170,12 +177,16 @@ void ed_append(node_t *from, node_t *to, char *rest) {
 void ed_insert(node_t *from, node_t *to, char *rest) {
 	push_to_undo_buf('i');
 	from = (from == global_tail() ? ll_last_node() : from);
-	size_t lines = append_aux(ll_prev(from, 1));
+	from = (from == global_head() ? from : ll_prev(from, 1));
+	size_t lines = append_aux(from);
 	io_write_line(stdout, "%ld line%s inserted\n", lines, (lines==1)?"":"s");
 	gbl_saved = 0;
 }
 
 void ed_print(node_t *from, node_t *to, char *rest) {
+	if (ll_len() == 0) {
+		return;
+	}
 	if (parse_defaults) {
 		io_write_line(stdout, "%s", ll_s(global_current()));
 		return;
@@ -191,6 +202,9 @@ void ed_print(node_t *from, node_t *to, char *rest) {
 }
 
 void ed_print_n(node_t *from, node_t *to, char *rest) {
+	if (ll_len() == 0) {
+		return;
+	}
 	if (parse_defaults) {
 		io_write_line(stdout, "%s", ll_s(global_current()));
 		return;
@@ -304,27 +318,36 @@ void ed_shell(node_t *from, node_t *to, char *rest) {
 	pclose(fp);
 }
 
-void edit_aux(char *rest) {
-	if (*rest == '\n' || *rest == '\0') {
-		err_normal(&to_repl, "%s\n", "Error: No arguments");
+int edit_aux(char *rest) {
+	_Bool dontfree = 0;
+	if (get_default_filename() == NULL) {
+		dontfree = 1;
 	}
-	rest = parse_filename(rest);
-
+	else {
+		rest = parse_filename(rest);
+	}
 	FILE *fp;
 	_Bool frompipe = 0;
-	if (*rest == '!') {
-		rest++;
-		rest = skipspaces(rest);
-		if (*rest == '!') {
-			rest = get_command_buf();
+	char *cmd = rest;
+	if (*cmd == '!') {
+		cmd++;
+		cmd = skipspaces(cmd);
+		if (*cmd == '!') {
+			cmd = get_command_buf();
 		}
-		fp = shopen(rest, "r");
-		set_command_buf(rest);
+		fp = shopen(cmd, "r");
+		if (fp == NULL) {
+			goto end;
+		}
+		set_command_buf(cmd);
 		frompipe = 1;
 	}
 	else {
+		fp = fileopen(rest, "r");
+		if (fp == NULL) {
+			goto end;
+		}
 		set_default_filename(rest);
-		fp = fileopen(get_default_filename(), "r");
 	}
 	/* Remove existing nodes */
 	node_t *node = ll_first_node();
@@ -334,7 +357,11 @@ void edit_aux(char *rest) {
 	/* Load new nodes */
 	io_load_file(fp);
 	frompipe == 1 ? pclose(fp) : fclose(fp);
-	free(rest);
+end:
+	if (!dontfree) {
+		free(rest);
+	}
+	return errno;
 }
 
 void ed_edit(node_t *from, node_t *to, char *rest) {
@@ -344,7 +371,14 @@ void ed_edit(node_t *from, node_t *to, char *rest) {
 	}
 
 	reset_undo();
-	edit_aux(rest);
+
+	if (*rest == '\n' || *rest == '\0') {
+		err_normal(&to_repl, "%s\n", "Error: No arguments");
+	}
+
+	if (edit_aux(rest) != 0) {
+		err_normal(&to_repl, "%s\n", strerror(errno));
+	}
 	gbl_saved = 1;
 }
 
@@ -355,8 +389,10 @@ void ed_edit_force(node_t *from, node_t *to, char *rest) {
 
 
 void ed_file(node_t *from, node_t *to, char *rest) {
-	printf("inside ed_file\n");
 	if (!isalnum(*rest)) {
+		if (get_default_filename() == NULL) {
+			return;
+		}
 		io_write_line(stdout, "%s\n", get_default_filename());
 		return;
 	}
@@ -384,9 +420,6 @@ void ed_quit(node_t *from, node_t *to, char *rest) {
 				"No write since last change." 
 				" Use 'Q' to quit without saving or save changes.\n");
 	}
-
-	ll_free();
-	gbl_buffers_free();
 	exit(EXIT_SUCCESS);
 }
 

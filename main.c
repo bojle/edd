@@ -25,16 +25,26 @@ void repl() {
 }
 
 int main(int argc, char *argv[]) {
-	if (argc < 2) {
-		fprintf(stderr, "Too few arguments\n");
-		exit(EXIT_FAILURE);
-	}
+	int optindex = parse_args(argc, argv);
 	ll_init();
 	fptr_init();
 	un_fptr_init();
 	gbl_buffers_init();
 
-	argv[1] = "man.txt";
-	edit_aux(argv[1]);
+	/* The FILE argument was provided */
+	if (optindex < argc) {
+		/* FILE is a shell command, prepare the string */
+		if (argv[optindex][0] == '!') {
+			set_command_buf(argv[optindex]);
+			for (int i = optindex+1; i < argc; ++i) {
+				append_command_buf(" ");
+				append_command_buf(argv[i]);
+			}
+			edit_aux(get_command_buf());
+		}
+		else {
+			edit_aux(argv[optindex]);
+		}
+	}
 	repl();
 }

@@ -98,5 +98,6 @@ node_t *ll_last_node();
 
 /* return the line number in the global list corresponding 'node' */
 int ll_node_index(node_t *node);
+ssize_t ll_len();
 
 #endif

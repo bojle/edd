@@ -26,7 +26,7 @@ struct node_t{
 
 node_t brake;
 
-static node_t gbl_current_node;
+static node_t *gbl_current_node;
 static node_t gbl_head_node;
 static node_t gbl_tail_node;
 static ssize_t gbl_len;
@@ -194,6 +194,7 @@ node_t *ll_attach_nodes(node_t *n1, node_t *n2) {
 }
 
 node_t *ll_init() {
+	atexit(ll_free);
 	ll_attach_nodes(&gbl_head_node, &gbl_tail_node);
 	ll_set_current_node(&gbl_head_node);
 	gbl_len = 0;
@@ -212,7 +213,7 @@ node_t *global_head() {
 }
 
 node_t *global_current() {
-	return &gbl_current_node;
+	return gbl_current_node;
 }
 node_t *global_tail() {
 	return &gbl_tail_node;
@@ -269,10 +270,10 @@ int ll_node_index(node_t *node) {
 
 void ll_set_current_node(node_t *node) {
 	if (node == global_tail()) {
-		gbl_current_node = *(ll_last_node());
+		gbl_current_node = ll_last_node();
 		return;
 	}
-	gbl_current_node = *node;
+	gbl_current_node = node;
 }
 
 void ll_set_s(node_t *n, char *s) {
@@ -292,4 +293,8 @@ node_t *ll_make_shallow(char *s) {
 	newnode->next = NULL;
 	newnode->s = s;
 	return newnode;
+}
+
+ssize_t ll_len() {
+	return gbl_len;
 }

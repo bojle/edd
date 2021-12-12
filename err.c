@@ -1,14 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include "io.h"
 #include "err.h"
 
 void err_normal(jmp_buf *buf, const char *fmt, ...) {
+	if (opt_silent) {
+		goto end;
+	}
 	va_list ap;
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	fflush(stderr);
+end:
 	if (buf != NULL) {
 		longjmp(*buf, 1); 
 	}
@@ -16,11 +21,15 @@ void err_normal(jmp_buf *buf, const char *fmt, ...) {
 
 
 void err_fatal(const char *fmt, ...) {
+	if (opt_silent) {
+		goto end;
+	}
 	va_list ap;
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	fflush(stderr);
+end:
 	exit(EXIT_FAILURE);
 }	
 
