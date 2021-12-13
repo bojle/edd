@@ -620,10 +620,12 @@ int gbl_total_substitutions = 0;
 void ed_subs(node_t *from, node_t *to, char *rest) {
 	push_to_undo_buf('s');
 
+#if 0
 	if (parse_defaults) {
 		from = ll_first_node();
 		to = ll_last_node();
 	}
+#endif
 	from = (from == global_head() ? ll_first_node() : from);
 	to = (to == global_tail() ? to : ll_next(to, 1));
 

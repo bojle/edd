@@ -473,13 +473,17 @@ void read_command_list(yb_t *yb, char *cmd) {
 }
 
 void execute_command_list(yb_t *yb, node_t *from) {
-	char current_cmd;
+	char current_cmd = 'p'; /* default command */
 	char *cmd;
 
 	for (int i = 0; i < (int)yb->nmemb; ++i) {
-		cmd = yb_at(yb, i);
+		cmd = skipspaces(yb_at(yb, i));
 		current_cmd = *cmd;
-		if (*cmd == 'a' || *cmd == 'i' || *cmd == 'c') {
+		if (current_cmd == 'g' || current_cmd == 'G' || current_cmd == 'v'
+				current_cmd == 'V') {
+			err_normal(&to_repl, "Illegal command %c in the command-list\n", current_cmd);
+		}
+		else if (*cmd == 'a' || *cmd == 'i' || *cmd == 'c') {
 			cmd = skipspaces(++cmd);
 			if (isalnum(*cmd)) {
 				err_normal(&to_repl, "%s\n", "Invalid command suffix");

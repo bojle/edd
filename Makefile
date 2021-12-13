@@ -1,11 +1,13 @@
 cc=gcc
 flags=-Wall -pedantic -Wextra -g -Wno-unused-parameter
-ldlibs=
+ldlibs=-lreadline
 exe=edd
 objects= main.o ll.o parse.o io.o ed.o err.o aux.o undo.o 
+macros=-D ED_INCLUDE_READLINE=0 -D ED_INCLUDE_HISTORY=0
+install_dir=/usr/local/bin
 
 ${exe}: ${objects}
-	${cc} ${flags} -o $@ $^ ${ldlibs}
+	${cc} ${flags} ${macros} -o $@ $^ ${ldlibs}
 
 main.o: main.c ll.h parse.h io.h err.h ed.h undo.h
 	${cc} ${flags} -c main.c
@@ -30,3 +32,12 @@ aux.o: aux.c aux.h err.h io.h ll.h undo.h
 
 undo.o: undo.c undo.h ll.h parse.h aux.h err.h ed.h
 	${cc} ${flags} -c undo.c 
+
+install: ${exe}
+	cp ./${exe} ${install_dir}/${exe}
+
+uninstall:
+	rm ${install_dir}/${exe}
+
+clean:
+	rm  *.o

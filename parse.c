@@ -285,14 +285,13 @@ void eval(parse_t *pt) {
 	printf("size: %ld\n", ll_node_size(pt->from));
 #endif 
 	if (strchr(gbl_commands, pt->command) == NULL) {
-		if (opt_restricted) {
-			if (strchr(gbl_restricted_commands, pt->command) != NULL) {
-				err_normal(&to_repl, "%s: %c\n", "Can't run command '%c' in"
-					   " restricted mode", pt->command);
-			}
-		}
-		else {
-			err_normal(&to_repl, "%s: %c\n", "Invalid Command", pt->command);
+		err_normal(&to_repl, "%s: %c\n", "Invalid Command", pt->command);
+	}
+
+	if (opt_restricted) {
+		if (strchr(gbl_restricted_commands, pt->command) != NULL) {
+			err_normal(&to_repl, "Can't run command '%c' in"
+				   " restricted mode\n", pt->command);
 		}
 	}
 	fptr_table[fp_hash(pt->command)](pt->from, pt->to, pt->argument);

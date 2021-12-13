@@ -21,6 +21,8 @@ int io_write_line(FILE *fp, const char *fmt, ...);
 extern _Bool opt_restricted;
 extern _Bool opt_silent;
 extern _Bool opt_extended;
+extern _Bool opt_history;
+extern _Bool opt_readline;
 
 /* 
  * returns optind i.e. index of the first argument

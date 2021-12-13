@@ -17,10 +17,18 @@ static void free_repl_line() {
 
 void repl() {
 	size_t linecap;
-	atexit(free_repl_line);
+	if (!opt_readline) {
+		atexit(free_repl_line);
+	}
 	setjmp(to_repl);
 	while (io_read_line(&repl_line, &linecap, stdin, get_prompt()) > 0) {
 		eval(parse(repl_line));
+		if (opt_readline) {
+			free(repl_line);
+			repl_line = NULL;
+		}
+		if (opt_history && repl_line[0] != '\0') {
+		}
 	}
 }
 
