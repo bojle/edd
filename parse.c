@@ -79,6 +79,7 @@ char *parse_address(parse_t *pt, char *addr) {
 	for (; isaddresschar(addr); addr++) {
 		long num = 1;
 		char *start = NULL;
+		node_t *tmp;
 		parse_defaults = 0;
 		switch (*addr) {
 			case '.':
@@ -114,11 +115,13 @@ char *parse_address(parse_t *pt, char *addr) {
 					num = strtol(addr + 1, &addr, 10);
 				}
 
+				tmp = global_current();
 				if (commapassed) {
 					pt->to = ll_prev(global_current(), num);
 		   		}
 				else {
 					pt->from = ll_prev(global_current(), num);
+					ll_set_current_node(tmp);
 				}
 				addr--;
 				break;
@@ -128,11 +131,13 @@ char *parse_address(parse_t *pt, char *addr) {
 					num = strtol(addr + 1, &addr, 10);
 				}
 
+				tmp = global_current();
 				if (commapassed) {
 					pt->to = ll_next(global_current(), num);
 				}
 				else {
 					pt->from = ll_next(global_current(), num);
+					ll_set_current_node(tmp);
 				}
 				addr--;
 				break;
@@ -162,17 +167,16 @@ char *parse_address(parse_t *pt, char *addr) {
 			default:
 				if (isdigit(*addr)) {
 					num = strtol(addr, &addr, 10);
+					tmp = global_current();
 					if (commapassed) {
 						pt->to = ll_at(num);
 					}
 					else {
 						pt->from = ll_at(num);
+						ll_set_current_node(tmp);
 					}
 					addr--;
 					digits_encountered++;
-				}
-				else {
-					// TODO: error checking here. Invalid address caracter
 				}
 		}
 	}

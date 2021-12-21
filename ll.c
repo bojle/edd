@@ -256,9 +256,8 @@ void ll_cut_node(node_t *n, int where) {
 }
 
 int ll_node_index(node_t *node) {
-	if (node == global_head() || node == global_tail()) {
-		return -1;
-	}
+	node = (node == global_head() ? ll_first_node() : node);
+	node = (node == global_tail() ? ll_last_node() : node);
 	node_t *i = ll_first_node();
 	int n = ED_INDEXING;
 	while (i != node) {

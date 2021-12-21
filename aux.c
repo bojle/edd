@@ -479,7 +479,7 @@ void execute_command_list(yb_t *yb, node_t *from) {
 	for (int i = 0; i < (int)yb->nmemb; ++i) {
 		cmd = skipspaces(yb_at(yb, i));
 		current_cmd = *cmd;
-		if (current_cmd == 'g' || current_cmd == 'G' || current_cmd == 'v'
+		if (current_cmd == 'g' || current_cmd == 'G' || current_cmd == 'v' ||
 				current_cmd == 'V') {
 			err_normal(&to_repl, "Illegal command %c in the command-list\n", current_cmd);
 		}
