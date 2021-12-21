@@ -205,14 +205,14 @@ void ed_print_n(node_t *from, node_t *to, char *rest) {
 	if (ll_len() == 0) {
 		return;
 	}
-	if (parse_defaults) {
-		io_write_line(stdout, "%s", ll_s(global_current()));
-		return;
-	}
 	to = (to == global_tail() ? to : ll_next(to, 1));
 	from = (from == global_tail() ? ll_prev(from, 1) : from);
 
 	size_t n = ll_node_index(from);
+	if (parse_defaults) {
+		io_write_line(stdout, "%ld\t%s", n, ll_s(global_current()));
+		return;
+	}
 	while (from != to) {
 		io_write_line(stdout, "%ld\t%s", n, ll_s(from));
 		from = ll_next(from, 1);
